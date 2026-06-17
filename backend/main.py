@@ -2368,8 +2368,62 @@ def start_periodic_cache_update():
 start_periodic_cache_update()
 
 
+class VoiceOverviewRequest(BaseModel):
+    text: str
+
+
+def text_to_speech_sarvam(text: str, api_key: str) -> Optional[str]:
+    url = "https://api.sarvam.ai/text-to-speech"
+    headers = {
+        "api-subscription-key": api_key,
+        "Content-Type": "application/json"
+    }
+    data = {
+        "text": text,
+        "target_language_code": "en-IN",
+        "speaker": "ritu",
+        "model": "bulbul:v3",
+        "pace": 1.05
+    }
+    try:
+        req_obj = urllib.request.Request(
+            url,
+            data=json.dumps(data).encode('utf-8'),
+            headers=headers,
+            method='POST'
+        )
+        with urllib.request.urlopen(req_obj, timeout=15) as response:
+            res_data = json.loads(response.read().decode('utf-8'))
+            if "audios" in res_data and len(res_data["audios"]) > 0:
+                return res_data["audios"][0]
+    except Exception as e:
+        print(f"[Sarvam AI TTS Error] Failed calling Sarvam AI API: {e}")
+    return None
+
+
+@app.post("/api/voice-overview")
+def voice_overview(req: VoiceOverviewRequest):
+    """Generates Text-to-Speech audio from text using Sarvam AI."""
+    api_key = (os.environ.get("SARVAM_API_KEY") or "").strip()
+
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="Sarvam AI API key is missing. Please set it as SARVAM_API_KEY in your backend .env file."
+        )
+
+    audio_base64 = text_to_speech_sarvam(req.text, api_key)
+    if not audio_base64:
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to generate voice output from Sarvam AI. Please check your SARVAM_API_KEY in the .env file or network connection."
+        )
+
+    return {"success": True, "audio": audio_base64}
+
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
 

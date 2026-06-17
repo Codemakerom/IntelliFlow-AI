@@ -41,6 +41,19 @@ export default function Planner({ onEventEnd, personnel }) {
   const [results, setResults] = useState(null);
   const [modalData, setModalData] = useState(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [ttsLoading, setTtsLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioObj, setAudioObj] = useState(null);
+  const [voiceHovered, setVoiceHovered] = useState(false);
+
+  // Stop audio on unmount or when results change
+  useEffect(() => {
+    return () => {
+      if (audioObj) {
+        audioObj.pause();
+      }
+    };
+  }, [audioObj, results]);
 
   // What-If Scenario Simulator state
   const [simulationQuery, setSimulationQuery] = useState('');
@@ -316,6 +329,68 @@ export default function Planner({ onEventEnd, personnel }) {
     }
 
     return <span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>;
+  };
+
+  const handleVoiceOverview = () => {
+    if (!results) return;
+
+    if (isPlaying) {
+      if (audioObj) {
+        audioObj.pause();
+      }
+      setIsPlaying(false);
+      return;
+    }
+
+    const juncText = results.precision_barricades && results.precision_barricades.length > 0
+      ? `We recommend sealing ${results.precision_barricades.map(j => j.name).join(' and ')} to intercept traffic flow.`
+      : '';
+      
+    const eventTypeDesc = form.event_type === 'planned' ? 'planned event' : 'active traffic incident';
+    
+    const text = `Here is the traffic forecast summary for the ${eventTypeDesc} in Bengaluru. ` +
+      `The cause is ${form.event_cause.replace(/_/g, ' ')} on the ${results.primary_corridor || form.corridor} corridor. ` +
+      `The traffic impact score is predicted at ${results.event_impact_score} out of 100, placing the alert level at ${results.alert_level.split(' ').slice(1).join(' ')}. ` +
+      `Estimated travel delays are expected to reach ${results.travel_delay_min} minutes. ` +
+      `To manage this flow, we recommend deploying a total of ${results.officers_recommended} traffic officers and ${results.barricades_recommended} barricades. ` +
+      `${juncText} ` +
+      `Drivers should use active diversions through ${results.alternate_routes?.join(', ') || 'adjacent arterial roads'} to bypass the bottleneck.`;
+
+    setTtsLoading(true);
+
+    const payload = {
+      text,
+    };
+
+    fetch('http://localhost:8000/api/voice-overview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to generate speech overview.');
+        return res.json();
+      })
+      .then(data => {
+        setTtsLoading(false);
+        if (data.success && data.audio) {
+          const audioSrc = `data:audio/wav;base64,${data.audio}`;
+          const audio = new Audio(audioSrc);
+          setAudioObj(audio);
+          setIsPlaying(true);
+          audio.play();
+          audio.onended = () => {
+            setIsPlaying(false);
+          };
+        } else {
+          alert(`TTS Error: ${data.error || 'Unknown error'}`);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert(`TTS Error: ${err.message}`);
+        setTtsLoading(false);
+      });
   };
 
   const handleSendWhatsAppBrief = async () => {
@@ -1143,6 +1218,55 @@ ${juncsText}
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Alert Level</span>
                       <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-dark)', marginTop: '4px' }}>{results.alert_level.split(' ')[1]}</div>
                     </div>
+                      <button 
+                        onClick={handleVoiceOverview}
+                        disabled={ttsLoading}
+                        onMouseEnter={() => setVoiceHovered(true)}
+                        onMouseLeave={() => setVoiceHovered(false)}
+                        className={`btn-voice ${isPlaying ? 'playing' : ''}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 18px',
+                          borderRadius: '24px',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          border: 'none',
+                          background: isPlaying 
+                            ? 'linear-gradient(135deg, #ff3b30 0%, #ff6b62 100%)' 
+                            : 'linear-gradient(135deg, var(--primary, #ea750e) 0%, #6f42c1 100%)',
+                          color: 'white',
+                          boxShadow: isPlaying 
+                            ? '0 4px 12px rgba(255, 59, 48, 0.3)' 
+                            : '0 4px 12px rgba(111, 66, 193, 0.25)',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          marginLeft: 'auto',
+                          marginRight: '16px',
+                          transform: voiceHovered ? 'translateY(-2px)' : 'none',
+                        }}
+                      >
+                        {ttsLoading ? (
+                          <>
+                            <span className="spinner-voice"></span> Generating...
+                          </>
+                        ) : isPlaying ? (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                              <rect x="4" y="4" width="16" height="16" rx="2" />
+                            </svg> Stop Voice
+                          </>
+                        ) : (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                              <line x1="12" y1="19" x2="12" y2="22" />
+                            </svg> Hear Briefing
+                          </>
+                        )}
+                      </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: bColor.bg, color: bColor.fg, padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 800, boxShadow: 'var(--shadow-sm)' }}>
                       <span style={{ width: '8px', height: '8px', backgroundColor: bColor.dot, borderRadius: '50%' }}></span>
                       {results.impact_bucket}

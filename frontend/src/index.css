@@ -1906,6 +1906,67 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateX(-50%) translateY(0);
 }
 
+/* Voice Overview button premium styles */
+.btn-voice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 24px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: 16px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, #6f42c1 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-voice:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(111, 66, 193, 0.45);
+}
+
+.btn-voice.playing {
+  background: linear-gradient(135deg, #ff3b30 0%, #ff6b62 100%);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+  animation: pulse-voice 1.5s infinite;
+}
+
+@keyframes pulse-voice {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 4px 20px rgba(255, 59, 48, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+  }
+}
+
+.spinner-voice {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin-voice 1s linear infinite;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+@keyframes spin-voice {
+  to { transform: rotate(360deg); }
+}
+
+
 /* Anomaly detection feeds panel */
 .cc-feeds-panel {
   display: grid;
