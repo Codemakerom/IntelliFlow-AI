@@ -71,7 +71,7 @@ from sklearn.metrics import (
 import joblib
 
 # ── CONFIG ──────────────────────────────────────────────────
-CSV_PATH = '/content/Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv'
+CSV_PATH = 'Astram event data_anonymized - Astram event data_anonymizedb40ac87.csv'
 
 HIGH_RISK_CORRIDORS = [
     'Mysore Road', 'Bellary Road 1', 'Tumkur Road',
@@ -139,7 +139,7 @@ for col in ['start_datetime', 'closed_datetime']:
 # FIX D: normalise Debris casing
 df['event_cause'] = df['event_cause'].astype(str).str.strip()
 df['event_cause'] = df['event_cause'].replace({'Debris': 'debris'})
-df['corridor']    = df['corridor'].astype(str).str.strip().replace('nan', 'Unknown Corridor')
+df['corridor']    = df['corridor'].fillna('Unknown Corridor').astype(str).str.strip()
 df['priority']    = df['priority'].fillna('Low')
 
 df['requires_road_closure'] = df['requires_road_closure'].astype(bool)
