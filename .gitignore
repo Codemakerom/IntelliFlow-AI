@@ -110,3 +110,9 @@ model_*.pkl
 *_feedback.csv
 *_by_cause.csv
 *_table.csv
+
+# Local run/test logs and credentials
+scratch/
+feedback_log.csv
+correction_table.json
+retrain_log.json

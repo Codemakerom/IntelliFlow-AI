@@ -4,20 +4,29 @@ import Heatmap from './components/Heatmap';
 import Planner from './components/Planner';
 import LearningEngine from './components/LearningEngine';
 import CommandCenter from './components/CommandCenter';
+import Settings from './components/Settings';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [groqKey, setGroqKey] = useState(localStorage.getItem('groq_api_key') || '');
   const [predictionContext, setPredictionContext] = useState(null);
+
+  // Field Commanders / Personnel state
+  const [personnel, setPersonnel] = useState(() => {
+    const saved = localStorage.getItem('gridlock_personnel');
+    return saved ? JSON.parse(saved) : [
+      { name: 'Inspector Shivanna (Mysore Road)', phone: '+919876543210' },
+      { name: 'ACP Gowda (Central Division)', phone: '+918765432109' },
+      { name: 'Inspector Ramachandra (West Division)', phone: '+919988776655' }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('gridlock_personnel', JSON.stringify(personnel));
+  }, [personnel]);
 
   const handleEventEnd = (predData) => {
     setPredictionContext(predData);
     setActiveTab('learning');
-  };
-
-  const handleKeyChange = (val) => {
-    setGroqKey(val);
-    localStorage.setItem('groq_api_key', val);
   };
 
   const renderContent = () => {
@@ -27,11 +36,18 @@ export default function App() {
       case 'heatmap':
         return <Heatmap />;
       case 'planner':
-        return <Planner onEventEnd={handleEventEnd} />;
+        return <Planner onEventEnd={handleEventEnd} personnel={personnel} />;
       case 'learning':
         return <LearningEngine predictionContext={predictionContext} />;
       case 'command':
         return <CommandCenter />;
+      case 'settings':
+        return (
+          <Settings 
+            personnel={personnel} 
+            setPersonnel={setPersonnel} 
+          />
+        );
       default:
         return <Dashboard />;
     }
@@ -49,6 +65,8 @@ export default function App() {
         return { title: 'Continuous Learning Engine', desc: 'Log real-world outcomes and auto-calibrate ML model accuracy.' };
       case 'command':
         return { title: 'Smart City Command Center', desc: 'Futuristic AI-powered anomaly detection and predictive grid overlays.' };
+      case 'settings':
+        return { title: 'Field Personnel Registry', desc: 'Register and manage active field commanders and their WhatsApp numbers.' };
       default:
         return { title: 'GridLock Control Center', desc: '' };
     }
@@ -140,6 +158,19 @@ export default function App() {
                 <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
               </svg>
               <span>Command Center</span>
+            </button>
+          </li>
+
+          <li className="nav-item">
+            <button 
+              className={`nav-button ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span>Settings</span>
             </button>
           </li>
         </ul>

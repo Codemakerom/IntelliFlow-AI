@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 function ConfidenceRing({ pct, size = 120, strokeWidth = 10, color = '#ea750e' }) {
   const r = (size - strokeWidth) / 2;
@@ -91,6 +91,122 @@ export default function LearningEngine({ predictionContext }) {
   const [delayReason, setDelayReason] = useState('');
   const [officerId, setOfficerId] = useState('OFF-' + Math.floor(1000 + Math.random() * 9000));
   const [notes, setNotes] = useState('');
+
+  // ── Voice Input State & Handler ──
+  const [isListening, setIsListening] = useState(false);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const recognitionRef = useRef(null);
+  const transcriptRef = useRef('');
+  const isMountedRef = useRef(true);
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
+
+  const parseVoiceTranscript = async (transcript) => {
+    if (!isMountedRef.current) return;
+    setVoiceLoading(true);
+    try {
+      const res = await fetch('http://localhost:8000/api/parse-voice-brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript: transcript,
+          groq_api_key: localStorage.getItem('groq_api_key') || ''
+        })
+      });
+      const data = await res.json();
+      if (!isMountedRef.current) return;
+      if (data.success && data.data) {
+        const parsed = data.data;
+        if (parsed.actual_time_min !== null) setActualTime(String(parsed.actual_time_min));
+        if (parsed.location !== null) setResolutionLocation(parsed.location);
+        if (parsed.diversion_effective !== null) setDiversionEffect(parsed.diversion_effective);
+        if (parsed.manpower_sufficient !== null) setManpowerSufficiency(parsed.manpower_sufficient);
+        if (parsed.delay_reason !== null) setDelayReason(parsed.delay_reason);
+        if (parsed.notes !== null) setNotes(parsed.notes);
+        alert(`🎙️ Voice parsed successfully!\n"${transcript}"`);
+      } else {
+        alert('❌ Failed to parse voice command.');
+      }
+    } catch (err) {
+      console.error(err);
+      if (isMountedRef.current) {
+        alert(`❌ Error connecting to parsing API: ${err.message}`);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setVoiceLoading(false);
+      }
+    }
+  };
+
+  const handleVoiceInput = () => {
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("❌ Speech recognition is not supported in this browser. Please use Google Chrome or Microsoft Edge.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => {
+      if (isMountedRef.current) {
+        setIsListening(true);
+        transcriptRef.current = '';
+      }
+    };
+
+    recognition.onresult = (event) => {
+      let resultText = '';
+      for (let i = 0; i < event.results.length; i++) {
+        resultText += event.results[i][0].transcript;
+      }
+      transcriptRef.current = resultText;
+    };
+
+    recognition.onerror = (e) => {
+      console.error(e);
+      if (isMountedRef.current) {
+        setIsListening(false);
+        transcriptRef.current = '';
+        if (e.error !== 'aborted') {
+          alert(`🎙️ Voice recognition error: ${e.error}`);
+        }
+      }
+    };
+
+    recognition.onend = () => {
+      if (isMountedRef.current) {
+        setIsListening(false);
+        recognitionRef.current = null;
+        const finalTranscript = transcriptRef.current.trim();
+        if (finalTranscript) {
+          parseVoiceTranscript(finalTranscript);
+        }
+      }
+    };
+
+    recognition.start();
+  };
 
   // ── Standalone form state (used when no predictionContext) ──
   const corridors = ['Mysore Road','Bellary Road 1','Tumkur Road','Bellary Road 2','Hosur Road','ORR North 1','Old Madras Road','Magadi Road','ORR East 1','Non-corridor'];
@@ -298,11 +414,63 @@ export default function LearningEngine({ predictionContext }) {
 
           {/* ── Section 2: Officer Inputs ── */}
           <div>
-            <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'18px' }}>
-              <div style={{ width:'6px', height:'20px', background:'#34c759', borderRadius:'3px' }} />
-              <span style={{ fontSize:'0.7rem', fontWeight:800, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.8px' }}>
-                Officer Inputs — Post-Event Ground Truth
-              </span>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'18px', flexWrap:'wrap', gap:'8px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <div style={{ width:'6px', height:'20px', background:'#34c759', borderRadius:'3px' }} />
+                <span style={{ fontSize:'0.7rem', fontWeight:800, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.8px' }}>
+                  Officer Inputs — Post-Event Ground Truth
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleVoiceInput}
+                disabled={voiceLoading}
+                style={{
+                  display:'flex',
+                  alignItems:'center',
+                  gap:'8px',
+                  padding:'10px 18px',
+                  borderRadius:'24px',
+                  borderStyle:'none',
+                  background: isListening 
+                    ? 'linear-gradient(135deg, #ff3b30, #ff453a)' 
+                    : 'linear-gradient(135deg, #34c759, #28a745)',
+                  color:'white',
+                  fontWeight:800,
+                  fontSize:'0.82rem',
+                  fontFamily:'var(--font-body)',
+                  cursor:'pointer',
+                  boxShadow: isListening 
+                    ? '0 0 15px 4px rgba(255,59,48,0.4)' 
+                    : '0 4px 12px rgba(52,199,89,0.35)',
+                  transition:'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: isListening ? 'scale(1.05)' : 'none',
+                  width: 'auto',
+                  margin: 0,
+                  height: 'auto'
+                }}
+                onMouseEnter={e => {
+                  if (!isListening) {
+                    e.currentTarget.style.transform = 'translateY(-1px) scale(1.03)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(52,199,89,0.45)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isListening) {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(52,199,89,0.35)';
+                  }
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                {isListening ? 'Listening...' : voiceLoading ? 'Parsing Voice...' : 'Voice Input'}
+              </button>
             </div>
 
             <form onSubmit={handleSubmit}>

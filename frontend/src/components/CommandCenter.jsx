@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Loader from './Loader';
 
 export default function CommandCenter() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [horizon, setHorizon] = useState('+0');
-  const [autoPlay, setAutoPlay] = useState(true);
+  const [autoPlay, setAutoPlay] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [flashKey, setFlashKey] = useState(0);
   const [liveNow, setLiveNow] = useState(new Date());
@@ -59,14 +60,22 @@ export default function CommandCenter() {
       });
   };
 
-  // Initial fetch on mount to populate the view
+  // Initial fetch on mount to populate the view (only if autoplay starts active, else deferred)
   useEffect(() => {
-    fetchStatus();
+    if (autoPlay) {
+      fetchStatus();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   // Poll API for live updates only when autoPlay is active
   useEffect(() => {
     if (!autoPlay) return;
+    
+    // Fetch immediately when playing/resuming to avoid waiting for interval
+    fetchStatus();
+    
     const interval = setInterval(() => {
       fetchStatus();
       setFlashKey(k => k + 1);
@@ -287,13 +296,63 @@ export default function CommandCenter() {
     };
   }, []);
 
+  if (!autoPlay && !data) {
+    return (
+      <div className="cc-container" style={{ minHeight: '500px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+        <div style={{ 
+          width: '80px', 
+          height: '80px', 
+          borderRadius: '50%', 
+          backgroundColor: 'rgba(234, 117, 14, 0.1)', 
+          color: 'var(--primary)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          marginBottom: '24px',
+          boxShadow: '0 0 20px rgba(234, 117, 14, 0.2)'
+        }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
+          </svg>
+        </div>
+        <h3 style={{ color: 'var(--text-dark)', fontWeight: 800, margin: '0 0 10px 0', fontSize: '1.4rem' }}>
+          CYBERNETIC MONITORING FEED PAUSED
+        </h3>
+        <p style={{ color: 'var(--text-muted)', maxWidth: '400px', fontSize: '0.9rem', fontWeight: 600, marginBottom: '24px', lineHeight: '1.5' }}>
+          Live API triggers and forecast loops are currently suspended to preserve system resources. Click below to initialize the command feeds.
+        </p>
+        <button 
+          onClick={() => {
+            setLoading(true);
+            setAutoPlay(true);
+          }}
+          style={{
+            padding: '12px 28px', 
+            background: 'var(--primary)',
+            border: 'none',
+            color: 'white', 
+            borderRadius: '8px',
+            fontSize: '0.9rem', 
+            fontWeight: 800, 
+            cursor: 'pointer', 
+            boxShadow: '0 4px 14px rgba(234, 117, 14, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s'
+          }}
+        >
+          <span>▶️</span> INITIALIZE FEEDS
+        </button>
+      </div>
+    );
+  }
+
   if (loading || !data) {
     return (
-      <div className="cc-container" style={{ minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: 'var(--primary)' }}>
-          <div style={{ fontSize: '2.5rem', animation: 'spin 1.5s linear infinite', marginBottom: '16px' }}>🔄</div>
-          <h3>AI Engine Initializing Cybernetic Monitoring Feeds...</h3>
-        </div>
+      <div className="cc-container" style={{ minHeight: '500px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader />
+        <h3 style={{ marginTop: '20px', color: 'var(--text-dark)', fontWeight: 800 }}>AI Engine Initializing Cybernetic Monitoring Feeds...</h3>
       </div>
     );
   }
@@ -376,7 +435,12 @@ export default function CommandCenter() {
             {refreshing ? '⚡ RUNNING APIS...' : '⚡ RETRIGGER APIS'}
           </button>
           <button 
-            onClick={() => setAutoPlay(!autoPlay)}
+            onClick={() => {
+              if (!autoPlay && !data) {
+                setLoading(true);
+              }
+              setAutoPlay(!autoPlay);
+            }}
             style={{
               padding: '6px 12px', 
               background: autoPlay ? 'var(--primary-glow)' : 'var(--bg-primary)',
