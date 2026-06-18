@@ -1,8 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import Loader from './Loader';
+import { translations } from '../translations';
 
-export default function Planner({ onEventEnd, personnel }) {
+const corridorTranslationsKn = {
+  'Mysore Road': 'ಮೈಸೂರು ರಸ್ತೆ',
+  'Bellary Road 1': 'ಬಳ್ಳಾರಿ ರಸ್ತೆ 1',
+  'Tumkur Road': 'ತುಮಕೂರು ರಸ್ತೆ',
+  'Bellary Road 2': 'ಬಳ್ಳಾರಿ ರಸ್ತೆ 2',
+  'Hosur Road': 'ಹೊಸೂರು ರಸ್ತೆ',
+  'ORR North 1': 'ಹೊರ ವರ್ತುಲ ರಸ್ತೆ ಉತ್ತರ 1',
+  'Old Madras Road': 'ಹಳೇ ಮದ್ರಾಸ್ ರಸ್ತೆ',
+  'Magadi Road': 'ಮಾಗಡಿ ರಸ್ತೆ',
+  'ORR East 1': 'ಹೊರ ವರ್ತುಲ ರಸ್ತೆ ಪೂರ್ವ 1',
+  'Non-corridor': 'ಕಾರಿಡಾರ್ ಅಲ್ಲದ ರಸ್ತೆ'
+};
+
+export default function Planner({ onEventEnd, personnel, language }) {
   const [options, setOptions] = useState(null);
+  const t = translations[language] || translations.en;
+  const translateVehicle = (vt) => {
+    const key = 'vehicle_' + vt.toLowerCase().replace(/ \/ /g, '_').replace(/ /g, '_').replace(/\(|\)/g, '');
+    return t[key] || vt;
+  };
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -290,11 +309,17 @@ export default function Planner({ onEventEnd, personnel }) {
     if (typeof bodyText === 'string') {
       bodyText = bodyText.trim();
       if (bodyText.startsWith('Alternative Plan:')) {
-        prefix = 'Alternative Plan:';
+        prefix = language === 'kn' ? 'ಪರ್ಯಾಯ ಯೋಜನೆ:' : 'Alternative Plan:';
         bodyText = bodyText.substring('Alternative Plan:'.length).trim();
       } else if (bodyText.startsWith('Alternative Operation Plan:')) {
-        prefix = 'Alternative Operation Plan:';
+        prefix = language === 'kn' ? 'ಪರ್ಯಾಯ ಕಾರ್ಯಾಚರಣೆ ಯೋಜನೆ:' : 'Alternative Operation Plan:';
         bodyText = bodyText.substring('Alternative Operation Plan:'.length).trim();
+      } else if (bodyText.startsWith('ಪರ್ಯಾಯ ಯೋಜನೆ:')) {
+        prefix = language === 'kn' ? 'ಪರ್ಯಾಯ ಯೋಜನೆ:' : 'Alternative Plan:';
+        bodyText = bodyText.substring('ಪರ್ಯಾಯ ಯೋಜನೆ:'.length).trim();
+      } else if (bodyText.startsWith('ಪರ್ಯಾಯ ಕಾರ್ಯಾಚರಣೆ ಯೋಜನೆ:')) {
+        prefix = language === 'kn' ? 'ಪರ್ಯಾಯ ಕಾರ್ಯಾಚರಣೆ ಯೋಜನೆ:' : 'Alternative Operation Plan:';
+        bodyText = bodyText.substring('ಪರ್ಯಾಯ ಕಾರ್ಯಾಚರಣೆ ಯೋಜನೆ:'.length).trim();
       }
 
       // Check if the bodyText contains list structures (bullets or hyphens)
@@ -342,24 +367,55 @@ export default function Planner({ onEventEnd, personnel }) {
       return;
     }
 
-    const juncText = results.precision_barricades && results.precision_barricades.length > 0
-      ? `We recommend sealing ${results.precision_barricades.map(j => j.name).join(' and ')} to intercept traffic flow.`
-      : '';
+    let text = '';
+    if (language === 'kn') {
+      const eventTypeDesc = form.event_type === 'planned' ? 'ಯೋಜಿತ ಈವೆಂಟ್' : 'ಸಕ್ರಿಯ ಸಂಚಾರ ಘಟನೆ';
+      const causeText = t[`cause_${form.event_cause}`] || form.event_cause.replace(/_/g, ' ');
+      const corridorName = corridorTranslationsKn[results.primary_corridor || form.corridor] || results.primary_corridor || form.corridor;
       
-    const eventTypeDesc = form.event_type === 'planned' ? 'planned event' : 'active traffic incident';
-    
-    const text = `Here is the traffic forecast summary for the ${eventTypeDesc} in Bengaluru. ` +
-      `The cause is ${form.event_cause.replace(/_/g, ' ')} on the ${results.primary_corridor || form.corridor} corridor. ` +
-      `The traffic impact score is predicted at ${results.event_impact_score} out of 100, placing the alert level at ${results.alert_level.split(' ').slice(1).join(' ')}. ` +
-      `Estimated travel delays are expected to reach ${results.travel_delay_min} minutes. ` +
-      `To manage this flow, we recommend deploying a total of ${results.officers_recommended} traffic officers and ${results.barricades_recommended} barricades. ` +
-      `${juncText} ` +
-      `Drivers should use active diversions through ${results.alternate_routes?.join(', ') || 'adjacent arterial roads'} to bypass the bottleneck.`;
+      const alertMap = {
+        'Critical Impact': 'ಅತ್ಯಂತ ಗಂಭೀರ ಪ್ರಭಾವ',
+        'High Impact': 'ಹೆಚ್ಚಿನ ಪ್ರಭಾವ',
+        'Moderate Impact': 'ಮಧ್ಯಮ ಪ್ರಭಾವ',
+        'Low Impact': 'ಕಡಿಮೆ ಪ್ರಭಾವ'
+      };
+      const rawAlert = results.alert_level.split(' ').slice(1).join(' ');
+      const alertKn = alertMap[rawAlert] || rawAlert;
+
+      const juncText = results.precision_barricades && results.precision_barricades.length > 0
+        ? `ಸಂಚಾರ ನಿಯಂತ್ರಣಕ್ಕಾಗಿ ನಾವು ${results.precision_barricades.map(j => j.name).join(' ಮತ್ತು ')} ಜಂಕ್ಷನ್‌ಗಳನ್ನು ಮುಚ್ಚಲು ಶಿಫಾರಸು ಮಾಡುತ್ತೇವೆ.`
+        : '';
+
+      const altRoutesText = results.alternate_routes?.map(r => corridorTranslationsKn[r] || r).join(', ') || 'adjacent arterial roads';
+
+      text = `ಬೆಂಗಳೂರಿನಲ್ಲಿ ${eventTypeDesc} ಗಾಗಿ ಟ್ರಾಫಿಕ್ ಮುನ್ಸೂಚನೆ ಸಾರಾಂಶ ಇಲ್ಲಿದೆ. ` +
+        `${corridorName} ಕಾರಿಡಾರ್‌ನಲ್ಲಿ ${causeText} ಇದರ ಕಾರಣವಾಗಿದೆ. ` +
+        `ಟ್ರಾಫಿಕ್ ಪ್ರಭಾವದ ಸ್ಕೋರ್ 100 ಕ್ಕೆ ${results.event_impact_score} ಎಂದು ಊಹಿಸಲಾಗಿದೆ, ಎಚ್ಚರಿಕೆ ಮಟ್ಟವನ್ನು ${alertKn} ಕ್ಕೆ ನಿಗದಿಪಡಿಸಲಾಗಿದೆ. ` +
+        `ಅಂದಾಜು ಪ್ರಯಾಣ ವಿಳಂಬವು ${results.travel_delay_min} ನಿಮಿಷಗಳನ್ನು ತಲುಪುವ ನಿರೀಕ್ಷೆಯಿದೆ. ` +
+        `ಈ ಸಂಚಾರವನ್ನು ನಿರ್ವಹಿಸಲು, ನಾವು ಒಟ್ಟು ${results.officers_recommended} ಸಂಚಾರ ಪೊಲೀಸ್ ಅಧಿಕಾರಿಗಳನ್ನು ಮತ್ತು ${results.barricades_recommended} ಬ್ಯಾರಿಕೇಡ್‌ಗಳನ್ನು ನಿಯೋಜಿಸಲು ಶಿಫಾರಸು ಮಾಡುತ್ತೇವೆ. ` +
+        `${juncText} ` +
+        `ಸಂಚಾರ ದಟ್ಟಣೆಯನ್ನು ತಪ್ಪಿಸಲು ಚಾಲಕರು ${altRoutesText} ಮೂಲಕ ಸಕ್ರಿಯ ಪರ್ಯಾಯ ಮಾರ್ಗಗಳನ್ನು ಬಳಸಬೇಕು.`;
+    } else {
+      const juncText = results.precision_barricades && results.precision_barricades.length > 0
+        ? `We recommend sealing ${results.precision_barricades.map(j => j.name).join(' and ')} to intercept traffic flow.`
+        : '';
+        
+      const eventTypeDesc = form.event_type === 'planned' ? 'planned event' : 'active traffic incident';
+      
+      text = `Here is the traffic forecast summary for the ${eventTypeDesc} in Bengaluru. ` +
+        `The cause is ${form.event_cause.replace(/_/g, ' ')} on the ${results.primary_corridor || form.corridor} corridor. ` +
+        `The traffic impact score is predicted at ${results.event_impact_score} out of 100, placing the alert level at ${results.alert_level.split(' ').slice(1).join(' ')}. ` +
+        `Estimated travel delays are expected to reach ${results.travel_delay_min} minutes. ` +
+        `To manage this flow, we recommend deploying a total of ${results.officers_recommended} traffic officers and ${results.barricades_recommended} barricades. ` +
+        `${juncText} ` +
+        `Drivers should use active diversions through ${results.alternate_routes?.join(', ') || 'adjacent arterial roads'} to bypass the bottleneck.`;
+    }
 
     setTtsLoading(true);
 
     const payload = {
       text,
+      target_language_code: language === 'kn' ? 'kn-IN' : 'en-IN'
     };
 
     fetch('http://localhost:8000/api/voice-overview', {
@@ -758,7 +814,7 @@ ${juncsText}
     return (
       <div className="empty-results">
         <div className="status-dot"></div>
-        <p>Loading metadata and default settings...</p>
+        <p>{language === 'kn' ? 'ಮೆಟಾಡೇಟಾ ಮತ್ತು ಡೀಫಾಲ್ಟ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...' : 'Loading metadata and default settings...'}</p>
       </div>
     );
   }
@@ -767,8 +823,8 @@ ${juncsText}
     return (
       <div className="empty-results" style={{ color: 'var(--danger)' }}>
         <span className="empty-icon">⚠️</span>
-        <p>Error starting planner: {error}</p>
-        <p style={{ fontSize: '0.85rem' }}>Make sure the FastAPI backend is running on port 8000.</p>
+        <p>{language === 'kn' ? 'ಪ್ಲಾನರ್ ಪ್ರಾರಂಭಿಸುವಲ್ಲಿ ದೋಷ:' : 'Error starting planner:'} {error}</p>
+        <p style={{ fontSize: '0.85rem' }}>{language === 'kn' ? 'FastAPI ಬ್ಯಾಕೆಂಡ್ ಪೋರ್ಟ್ 8000 ರಲ್ಲಿ ಚಾಲನೆಯಲ್ಲಿದೆಯೇ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.' : 'Make sure the FastAPI backend is running on port 8000.'}</p>
       </div>
     );
   }
@@ -831,10 +887,10 @@ ${juncsText}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-dark)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Operational Context
+                {t.operational_context}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Toggle between Unplanned Incident Logging and Planned Event Parameters
+                {t.context_desc}
               </span>
             </div>
           </div>
@@ -846,7 +902,7 @@ ${juncsText}
               color: form.event_type === 'unplanned' ? 'var(--primary)' : 'var(--text-muted)',
               transition: 'color 0.3s ease'
             }}>
-              Unplanned Incident
+              {t.unplanned_incident}
             </span>
             
             <div className="checkbox-wrapper-41">
@@ -864,7 +920,7 @@ ${juncsText}
               color: form.event_type === 'planned' ? 'var(--primary)' : 'var(--text-muted)',
               transition: 'color 0.3s ease'
             }}>
-              Planned Event
+              {t.planned_event}
             </span>
           </div>
         </div>
@@ -891,7 +947,7 @@ ${juncsText}
               )}
             </div>
             <h3 style={{ fontSize: '1.15rem', color: 'var(--primary)', textTransform: 'uppercase', margin: 0, fontWeight: 800 }}>
-              {form.event_type === 'planned' ? 'Planned Event Parameters' : 'Unplanned Incident Logger'}
+              {form.event_type === 'planned' ? t.planned_event : t.unplanned_incident}
             </h3>
           </div>
           
@@ -907,14 +963,14 @@ ${juncsText}
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                   </span>
-                  <label>Primary Corridor</label>
+                  <label>{t.primary_corridor}</label>
                 </div>
                 <select 
                   value={form.corridor} 
                   onChange={(e) => handleCorridorChange(e.target.value)}
                 >
                   {options?.corridors.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>{language === 'kn' ? (corridorTranslationsKn[c] || c) : c}</option>
                   ))}
                 </select>
               </div>
@@ -927,14 +983,14 @@ ${juncsText}
                       <polyline points="17 6 23 6 23 12" />
                     </svg>
                   </span>
-                  <label>Priority Level</label>
+                  <label>{t.priority_level}</label>
                 </div>
                 <select 
                   value={form.priority} 
                   onChange={(e) => handleInputChange('priority', e.target.value)}
                 >
-                  <option value="High">High</option>
-                  <option value="Low">Low</option>
+                  <option value="High">{t.priority_high}</option>
+                  <option value="Low">{t.priority_low}</option>
                 </select>
               </div>
             </div>
@@ -948,7 +1004,7 @@ ${juncsText}
                       <circle cx="12" cy="10" r="3" />
                     </svg>
                   </span>
-                  <label>Zone (Auto-filled)</label>
+                  <label>{t.zone_auto}</label>
                 </div>
                 <input type="text" value={form.zone} readOnly style={{ backgroundColor: '#f0f4f8', cursor: 'not-allowed', fontWeight: 700 }} />
               </div>
@@ -960,7 +1016,7 @@ ${juncsText}
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                     </svg>
                   </span>
-                  <label>Police Station (Auto-filled)</label>
+                  <label>{t.ps_auto}</label>
                 </div>
                 <input type="text" value={form.police_station} readOnly style={{ backgroundColor: '#f0f4f8', cursor: 'not-allowed', fontWeight: 700 }} />
               </div>
@@ -976,7 +1032,7 @@ ${juncsText}
                     <line x1="3" y1="10" x2="21" y2="10" />
                   </svg>
                 </span>
-                <label>Start Date & Time</label>
+                <label>{t.start_time}</label>
               </div>
               <input 
                 type="datetime-local" 
@@ -1000,14 +1056,14 @@ ${juncsText}
                         <line x1="3" y1="18" x2="3.01" y2="18" />
                       </svg>
                     </span>
-                    <label>Event Cause</label>
+                    <label>{t.event_cause}</label>
                   </div>
                   <select
                     value={form.event_cause}
                     onChange={(e) => handleInputChange('event_cause', e.target.value)}
                   >
                     {unplannedCauses.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
+                      <option key={c.value} value={c.value}>{t['cause_' + c.value] || c.label}</option>
                     ))}
                   </select>
                 </div>
@@ -1023,14 +1079,14 @@ ${juncsText}
                           <circle cx="17" cy="17" r="2" />
                         </svg>
                       </span>
-                      <label>Involved Vehicle Type</label>
+                      <label>{t.vehicle_type}</label>
                     </div>
                     <select
                       value={form.veh_type}
                       onChange={(e) => handleInputChange('veh_type', e.target.value)}
                     >
                       {vehicleTypes.map((vt) => (
-                        <option key={vt} value={vt}>{vt}</option>
+                        <option key={vt} value={vt}>{translateVehicle(vt)}</option>
                       ))}
                     </select>
                   </div>
@@ -1043,7 +1099,7 @@ ${juncsText}
                     checked={form.requires_road_closure} 
                     onChange={(e) => handleInputChange('requires_road_closure', e.target.checked)}
                   />
-                  <label htmlFor="closure-checkbox">Requires Road Closure</label>
+                  <label htmlFor="closure-checkbox">{t.requires_closure}</label>
                 </div>
               </div>
             )}
@@ -1063,14 +1119,14 @@ ${juncsText}
                         <line x1="3" y1="18" x2="3.01" y2="18" />
                       </svg>
                     </span>
-                    <label>Event Cause</label>
+                    <label>{t.event_cause}</label>
                   </div>
                   <select
                     value={form.event_cause}
                     onChange={(e) => handleInputChange('event_cause', e.target.value)}
                   >
                     {plannedCauses.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
+                      <option key={c.value} value={c.value}>{t['cause_' + c.value] || c.label}</option>
                     ))}
                   </select>
                 </div>
@@ -1085,7 +1141,7 @@ ${juncsText}
                         <line x1="3" y1="10" x2="21" y2="10" />
                       </svg>
                     </span>
-                    <label>Expected End Date & Time</label>
+                    <label>{t.end_time}</label>
                   </div>
                   <input 
                     type="datetime-local" 
@@ -1102,12 +1158,12 @@ ${juncsText}
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                       </svg>
                     </span>
-                    <label>Event Description / Details</label>
+                    <label>{t.event_desc}</label>
                   </div>
                   <textarea 
                     rows="4"
                     value={form.description}
-                    placeholder="Describe specific work details (e.g. Metro pillar work, flyover construction, cricket match at Chinnaswamy Stadium)..."
+                    placeholder={t.event_desc_placeholder}
                     onChange={(e) => handleInputChange('description', e.target.value)}
                     style={{
                       padding: '12px 16px',
@@ -1135,7 +1191,7 @@ ${juncsText}
                       <line x1="6" y1="20" x2="6" y2="14" />
                     </svg>
                   </span>
-                  <label>Corridor Incidents (24h)</label>
+                  <label>{t.corr_incidents}</label>
                 </div>
                 <input 
                   type="number" 
@@ -1152,7 +1208,7 @@ ${juncsText}
                       <path d="M5 18v2M19 18v2M2 10h20M2 14h20" />
                     </svg>
                   </span>
-                  <label>Corridor Closures (24h)</label>
+                  <label>{t.corr_closures}</label>
                 </div>
                 <input 
                   type="number" 
@@ -1165,13 +1221,13 @@ ${juncsText}
 
             <button type="submit" className="btn-primary" disabled={submitting} style={{ marginTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               {submitting ? (
-                'Running Calculations...'
+                t.calculating
               ) : (
                 <>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                   </svg>
-                  Predict Event Impact
+                  {t.predict_impact}
                 </>
               )}
             </button>
@@ -1198,7 +1254,7 @@ ${juncsText}
           {submitting ? (
             <div className="empty-results" style={{ padding: '60px 20px', flexDirection: 'column' }}>
               <Loader />
-              <p style={{ marginTop: '20px', fontWeight: 700, color: 'var(--text-muted)' }}>Calculating traffic routing vectors and resource allocations...</p>
+              <p style={{ marginTop: '20px', fontWeight: 700, color: 'var(--text-muted)' }}>{language === 'kn' ? 'ಸಂಚಾರ ಮಾರ್ಗ ವಾಹಕಗಳು ಮತ್ತು ಸಂಪನ್ಮೂಲ ನಿಯೋಜನೆಗಳನ್ನು ಲೆಕ್ಕಹಾಕಲಾಗುತ್ತಿದೆ...' : 'Calculating traffic routing vectors and resource allocations...'}</p>
             </div>
           ) : results ? (
             <div>
@@ -1215,8 +1271,8 @@ ${juncsText}
                 return (
                   <div className="results-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Alert Level</span>
-                      <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-dark)', marginTop: '4px' }}>{results.alert_level.split(' ')[1]}</div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>{t.alert_level}</span>
+                      <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-dark)', marginTop: '4px' }}>{t['alert_' + results.alert_level.split(' ')[1]?.toLowerCase()] || results.alert_level.split(' ')[1]}</div>
                     </div>
                       <button 
                         onClick={handleVoiceOverview}
@@ -1249,13 +1305,13 @@ ${juncsText}
                       >
                         {ttsLoading ? (
                           <>
-                            <span className="spinner-voice"></span> Generating...
+                            <span className="spinner-voice"></span> {t.generating}
                           </>
                         ) : isPlaying ? (
                           <>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
                               <rect x="4" y="4" width="16" height="16" rx="2" />
-                            </svg> Stop Voice
+                            </svg> {t.stop_voice}
                           </>
                         ) : (
                           <>
@@ -1263,13 +1319,13 @@ ${juncsText}
                               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                               <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                               <line x1="12" y1="19" x2="12" y2="22" />
-                            </svg> Hear Briefing
+                            </svg> {t.hear_briefing}
                           </>
                         )}
                       </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: bColor.bg, color: bColor.fg, padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 800, boxShadow: 'var(--shadow-sm)' }}>
                       <span style={{ width: '8px', height: '8px', backgroundColor: bColor.dot, borderRadius: '50%' }}></span>
-                      {results.impact_bucket}
+                      {t['alert_' + results.impact_bucket?.toLowerCase()] || results.impact_bucket}
                     </div>
                   </div>
                 );
@@ -1277,44 +1333,44 @@ ${juncsText}
 
               {/* ── TOP 4 METRIC CARDS ── */}
               <div className="results-grid">
-                <div className="result-card card-pink" onClick={() => setModalData({ title: "Impact Score Reasoning", value: `${results.event_impact_score}/100`, text: results.reasoning?.event_impact_score || "Calculating reasoning..." })}>
+                <div className="result-card card-pink" onClick={() => setModalData({ title: language === 'kn' ? "ಪ್ರಭಾವದ ಸ್ಕೋರ್ ವಿಶ್ಲೇಷಣೆ" : "Impact Score Reasoning", value: `${results.event_impact_score}/100`, text: results.reasoning?.event_impact_score || "Calculating reasoning..." })}>
                   <div className="metric-card-layout">
                     <div className="metric-circle-icon metric-circle-pink">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
                     </div>
-                    <div><h4>Impact Score</h4><div className="value">{results.event_impact_score} / 100</div><div className="detail">Weighted delay &amp; radius severity</div></div>
+                    <div><h4>{t.impact_score}</h4><div className="value">{results.event_impact_score} / 100</div><div className="detail">{language === 'kn' ? 'ವಿಳಂಬ ಮತ್ತು ವ್ಯಾಪ್ತಿಯ ತೀವ್ರತೆ' : 'Weighted delay & radius severity'}</div></div>
                   </div>
-                  <div className="click-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>Click to see reasoning</div>
+                  <div className="click-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>{t.click_reasoning}</div>
                 </div>
 
-                <div className="result-card card-blue" onClick={() => setModalData({ title: "Zone Congestion Risk Reasoning", value: `${results.zone_congestion_risk}/100`, text: results.reasoning?.zone_congestion_risk || "Calculating reasoning..." })}>
+                <div className="result-card card-blue" onClick={() => setModalData({ title: language === 'kn' ? "ವಲಯ ಸಂಚಾರ ದಟ್ಟಣೆ ಅಪಾಯ ವಿಶ್ಲೇಷಣೆ" : "Zone Congestion Risk Reasoning", value: `${results.zone_congestion_risk}/100`, text: results.reasoning?.zone_congestion_risk || "Calculating reasoning..." })}>
                   <div className="metric-card-layout">
                     <div className="metric-circle-icon metric-circle-blue">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
                     </div>
-                    <div><h4>Zone Congestion Risk</h4><div className="value">{results.zone_congestion_risk} / 100</div><div className="detail">Zone {results.zone} @ {results.hour}</div></div>
+                    <div><h4>{t.congestion_risk}</h4><div className="value">{results.zone_congestion_risk} / 100</div><div className="detail">{language === 'kn' ? `ವಲಯ ${results.zone} @ ${results.hour}` : `Zone ${results.zone} @ ${results.hour}`}</div></div>
                   </div>
-                  <div className="click-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>Click to see reasoning</div>
+                  <div className="click-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>{t.click_reasoning}</div>
                 </div>
 
-                <div className="result-card card-purple" onClick={() => setModalData({ title: "ML Road Closure Probability Reasoning", value: results.closure_probability, text: results.reasoning?.road_closure_predicted || "Calculating reasoning..." })}>
+                <div className="result-card card-purple" onClick={() => setModalData({ title: language === 'kn' ? "ರಸ್ತೆ ಮುಚ್ಚುವಿಕೆಯ ಸಂಭವನೀಯತೆ ವಿಶ್ಲೇಷಣೆ" : "ML Road Closure Probability Reasoning", value: results.closure_probability, text: results.reasoning?.road_closure_predicted || "Calculating reasoning..." })}>
                   <div className="metric-card-layout">
                     <div className="metric-circle-icon metric-circle-purple">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
                     </div>
-                    <div><h4>ML Road Closure Prob</h4><div className="value">{results.closure_probability}</div><div className="detail">Estimated closure probability</div></div>
+                    <div><h4>{t.road_closure_prob}</h4><div className="value">{results.closure_probability}</div><div className="detail">{language === 'kn' ? 'ಅಂದಾಜು ಮುಚ್ಚುವಿಕೆಯ ಸಂಭವನೀಯತೆ' : 'Estimated closure probability'}</div></div>
                   </div>
-                  <div className="click-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>Click to see reasoning</div>
+                  <div className="click-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>{t.click_reasoning}</div>
                 </div>
 
-                <div className="result-card card-green" onClick={() => setModalData({ title: "ML Estimated Duration Reasoning", value: results.estimated_resolution_time_min >= 60 ? `${(results.estimated_resolution_time_min / 60).toFixed(1)} hrs` : `${results.estimated_resolution_time_min.toFixed(0)} min`, text: results.reasoning?.estimated_resolution_time_min || "Calculating reasoning..." })}>
+                <div className="result-card card-green" onClick={() => setModalData({ title: language === 'kn' ? "ಅಂದಾಜು ಅವಧಿ ವಿಶ್ಲೇಷಣೆ" : "ML Estimated Duration Reasoning", value: results.estimated_resolution_time_min >= 60 ? `${(results.estimated_resolution_time_min / 60).toFixed(1)} ${t.hrs}` : `${results.estimated_resolution_time_min.toFixed(0)} ${t.mins}`, text: results.reasoning?.estimated_resolution_time_min || "Calculating reasoning..." })}>
                   <div className="metric-card-layout">
                     <div className="metric-circle-icon metric-circle-green">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
-                    <div><h4>ML Estimated Duration</h4><div className="value">{results.estimated_resolution_time_min >= 60 ? `${(results.estimated_resolution_time_min / 60).toFixed(1)} hrs` : `${results.estimated_resolution_time_min.toFixed(0)} min`}</div><div className="detail">Estimated clearance duration</div></div>
+                    <div><h4>{t.estimated_duration}</h4><div className="value">{results.estimated_resolution_time_min >= 60 ? `${(results.estimated_resolution_time_min / 60).toFixed(1)} ${t.hrs}` : `${results.estimated_resolution_time_min.toFixed(0)} ${t.mins}`}</div><div className="detail">{language === 'kn' ? 'ಅಂದಾಜು ತೆರವುಗೊಳಿಸುವ ಅವಧಿ' : 'Estimated clearance duration'}</div></div>
                   </div>
-                  <div className="click-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>Click to see reasoning</div>
+                  <div className="click-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>{t.click_reasoning}</div>
                 </div>
               </div>
 
@@ -1323,34 +1379,93 @@ ${juncsText}
                 <div className="tac-reasoning-header">
                   <span className="tac-reasoning-title">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    AI REASONING
+                    {language === 'kn' ? 'AI ವಿಶ್ಲೇಷಣೆ' : 'AI REASONING'}
                   </span>
-                  <span className="tac-confidence-badge">Confidence: {Math.min(98, Math.max(72, results.event_impact_score + 10))}%</span>
+                  <span className="tac-confidence-badge">
+                    {language === 'kn' ? 'ವಿಶ್ವಾಸಾರ್ಹತೆ' : 'Confidence'}: {Math.min(98, Math.max(72, results.event_impact_score + 10))}%
+                  </span>
                 </div>
                 <div className="tac-reasoning-checks">
-                  <div className="tac-check-item tac-check-green"><span>✓</span><span><strong>{results.similar_events_count || 3}</strong> similar events analyzed in historical database</span></div>
+                  <div className="tac-check-item tac-check-green">
+                    <span>✓</span>
+                    <span>
+                      {language === 'kn' ? (
+                        <>ಐತಿಹಾಸಿಕ ಡೇಟಾಬೇಸ್‌ನಲ್ಲಿ <strong>{results.similar_events_count || 3}</strong> ಸಮಾನ ಘಟನೆಗಳನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗಿದೆ</>
+                      ) : (
+                        <><strong>{results.similar_events_count || 3}</strong> similar events analyzed in historical database</>
+                      )}
+                    </span>
+                  </div>
                   {form.event_type === 'planned' && results.expected_crowd > 0 ? (
-                    <div className="tac-check-item tac-check-green"><span>✓</span><span>Expected crowd: <strong>{results.expected_crowd.toLocaleString()}</strong> attendees</span></div>
+                    <div className="tac-check-item tac-check-green">
+                      <span>✓</span>
+                      <span>
+                        {language === 'kn' ? (
+                          <>ನಿರೀಕ್ಷಿತ ಜನಸಮೂಹ: <strong>{results.expected_crowd.toLocaleString()}</strong> ಜನರು</>
+                        ) : (
+                          <>Expected crowd: <strong>{results.expected_crowd.toLocaleString()}</strong> attendees</>
+                        )}
+                      </span>
+                    </div>
                   ) : (
-                    <div className="tac-check-item tac-check-green"><span>✓</span><span>Unplanned active corridor incident response protocol triggered</span></div>
+                    <div className="tac-check-item tac-check-green">
+                      <span>✓</span>
+                      <span>
+                        {language === 'kn' ? (
+                          'ಯೋಜಿತವಲ್ಲದ ಸಕ್ರಿಯ ಕಾರಿಡಾರ್ ಘಟನೆಯ ಪ್ರತಿಕ್ರಿಯೆ ಪ್ರೋಟೋಕಾಲ್ ಸಕ್ರಿಯಗೊಂಡಿದೆ'
+                        ) : (
+                          'Unplanned active corridor incident response protocol triggered'
+                        )}
+                      </span>
+                    </div>
                   )}
-                  <div className="tac-check-item tac-check-orange"><span>✓</span><span>Current traffic volume: <strong>+{results.traffic_volume_delta_pct || 34}%</strong> above baseline</span></div>
+                  <div className="tac-check-item tac-check-orange">
+                    <span>✓</span>
+                    <span>
+                      {language === 'kn' ? (
+                        <>ಪ್ರಸ್ತುತ ಸಂಚಾರ ಪ್ರಮಾಣ: ಮೂಲ ಮಟ್ಟಕ್ಕಿಂತ <strong>+{results.traffic_volume_delta_pct || 34}%</strong> ಹೆಚ್ಚು</>
+                      ) : (
+                        <>Current traffic volume: <strong>+{results.traffic_volume_delta_pct || 34}%</strong> above baseline</>
+                      )}
+                    </span>
+                  </div>
                   {results.precision_barricades?.[0] && (
-                    <div className="tac-check-item tac-check-red"><span>✓</span><span><strong>{results.precision_barricades[0].name}</strong> historically causes {results.precision_barricades[0].closure_rate_pct}% spillover / closure rate</span></div>
+                    <div className="tac-check-item tac-check-red">
+                      <span>✓</span>
+                      <span>
+                        {language === 'kn' ? (
+                          <><strong>{results.precision_barricades[0].name}</strong> ಐತಿಹಾಸಿಕವಾಗಿ {results.precision_barricades[0].closure_rate_pct}% ಸ್ಪಿಲ್‌ಓವರ್ / ಮುಚ್ಚುವಿಕೆಯ ದರವನ್ನು ಉಂಟುಮಾಡುತ್ತದೆ</>
+                        ) : (
+                          <><strong>{results.precision_barricades[0].name}</strong> historically causes {results.precision_barricades[0].closure_rate_pct}% spillover / closure rate</>
+                        )}
+                      </span>
+                    </div>
                   )}
                   <div className="tac-check-item tac-check-green">
                      <span>✓</span>
                      {results.ml_correction_source === 'none' ? (
-                       <span>ML Calibration: <strong>No prior feedback available</strong> for this corridor/cause (baseline model active)</span>
+                       <span>
+                         {language === 'kn' ? (
+                           <>ML ಮಾಪನಾಂಕ ನಿರ್ಣಯ: ಈ ಕಾರಿಡಾರ್/ಕಾರಣಕ್ಕೆ <strong>ಯಾವುದೇ ಮುಂಚಿನ ಪ್ರತಿಕ್ರಿಯೆ ಲಭ್ಯವಿಲ್ಲ</strong> (ಮೂಲ ಮಾದರಿ ಸಕ್ರಿಯವಾಗಿದೆ)</>
+                         ) : (
+                           <>ML Calibration: <strong>No prior feedback available</strong> for this corridor/cause (baseline model active)</>
+                         )}
+                       </span>
                      ) : (
-                       <span>ML Calibration: Applied <strong>{results.ml_correction_delta_min >= 0 ? '+' : ''}{results.ml_correction_delta_min} min</strong> correction based on {results.ml_correction_source} feedback</span>
+                       <span>
+                         {language === 'kn' ? (
+                           <>ML ಮಾಪನಾಂಕ ನಿರ್ಣಯ: {results.ml_correction_source} ಪ್ರತಿಕ್ರಿಯೆಯ ಆಧಾರದ ಮೇಲೆ <strong>{results.ml_correction_delta_min >= 0 ? '+' : ''}{results.ml_correction_delta_min} ನಿಮಿಷ</strong> ತಿದ್ದುಪಡಿ ಅನ್ವಯಿಸಲಾಗಿದೆ</>
+                         ) : (
+                           <>ML Calibration: Applied <strong>{results.ml_correction_delta_min >= 0 ? '+' : ''}{results.ml_correction_delta_min} min</strong> correction based on {results.ml_correction_source} feedback</>
+                         )}
+                       </span>
                      )}
                    </div>
                 </div>
                 <div className="tac-reasoning-conclusion">
-                  <strong>Therefore:</strong> Seal <strong>{results.precision_barricades?.[0]?.name || 'primary choke-point'}</strong> first.<br/>
-                  Expected inflow reduction: <strong>{results.precision_barricades?.[0]?.efficiency_pct || 75}%</strong>.<br/>
-                  Confidence: <strong>{Math.min(98, Math.max(72, results.event_impact_score + 10))}%</strong>.
+                  <strong>{language === 'kn' ? 'ಆದ್ದರಿಂದ:' : 'Therefore:'}</strong> {language === 'kn' ? 'ಮೊದಲು' : 'Seal'} <strong>{results.precision_barricades?.[0]?.name || 'primary choke-point'}</strong> {language === 'kn' ? 'ಅನ್ನು ಮುಚ್ಚಿ.' : 'first.'}<br/>
+                  {language === 'kn' ? 'ನಿರೀಕ್ಷಿತ ಒಳಹರಿವು ಕಡಿತ:' : 'Expected inflow reduction:'} <strong>{results.precision_barricades?.[0]?.efficiency_pct || 75}%</strong>.<br/>
+                  {language === 'kn' ? 'ವಿಶ್ವಾಸಾರ್ಹತೆ:' : 'Confidence:'} <strong>{Math.min(98, Math.max(72, results.event_impact_score + 10))}%</strong>.
                 </div>
               </div>
 
@@ -1358,7 +1473,7 @@ ${juncsText}
               <div className="tac-deployment-plan">
                 <div className="tac-section-header tac-header-orange">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  DEPLOYMENT PLAN
+                  {language === 'kn' ? 'ನಿಯೋಜನೆ ಯೋಜನೆ' : 'DEPLOYMENT PLAN'}
                 </div>
                 <div className="tac-deploy-grid">
                   {(results.precision_barricades || []).map((junc, i) => (
@@ -1367,11 +1482,11 @@ ${juncsText}
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                       </span>
                       <div className="tac-deploy-info">
-                        <span className="tac-deploy-qty">{junc.officers_needed} Officer{junc.officers_needed > 1 ? 's' : ''}</span>
+                        <span className="tac-deploy-qty">{junc.officers_needed} {language === 'kn' ? 'ಅಧಿಕಾರಿ' : 'Officer' + (junc.officers_needed > 1 ? 's' : '')}</span>
                         <span className="tac-deploy-arrow">→</span>
                         <span className="tac-deploy-dest">{junc.name}</span>
                       </div>
-                      <span className="tac-deploy-tag tac-tag-orange">Choke-Point {i + 1}</span>
+                      <span className="tac-deploy-tag tac-tag-orange">{language === 'kn' ? 'ಚೋಕ್-ಪಾಯಿಂಟ್ ' + (i + 1) : 'Choke-Point ' + (i + 1)}</span>
                     </div>
                   ))}
                   <div className="tac-deploy-row">
@@ -1379,22 +1494,22 @@ ${juncsText}
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </span>
                     <div className="tac-deploy-info">
-                      <span className="tac-deploy-qty">{Math.max(1, results.officers_recommended - results.total_officers_choke)} Officer{Math.max(1, results.officers_recommended - results.total_officers_choke) > 1 ? 's' : ''}</span>
+                      <span className="tac-deploy-qty">{Math.max(1, results.officers_recommended - results.total_officers_choke)} {language === 'kn' ? 'ಅಧಿಕಾರಿ' : 'Officer' + (Math.max(1, results.officers_recommended - results.total_officers_choke) > 1 ? 's' : '')}</span>
                       <span className="tac-deploy-arrow">→</span>
-                      <span className="tac-deploy-dest">Diversion Monitoring</span>
+                      <span className="tac-deploy-dest">{language === 'kn' ? 'ಪರ್ಯಾಯ ಮಾರ್ಗ ಮೇಲ್ವಿಚಾರಣೆ' : 'Diversion Monitoring'}</span>
                     </div>
-                    <span className="tac-deploy-tag tac-tag-blue">Support</span>
+                    <span className="tac-deploy-tag tac-tag-blue">{language === 'kn' ? 'ಬೆಂಬಲ' : 'Support'}</span>
                   </div>
                   <div className="tac-deploy-row">
                     <span className="tac-deploy-badge badge-vehicle">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
                     </span>
                     <div className="tac-deploy-info">
-                      <span className="tac-deploy-qty">{results.vehicles_recommended} Vehicle{results.vehicles_recommended > 1 ? 's' : ''}</span>
+                      <span className="tac-deploy-qty">{results.vehicles_recommended} {language === 'kn' ? 'ವಾಹನ' : 'Vehicle' + (results.vehicles_recommended > 1 ? 's' : '')}</span>
                       <span className="tac-deploy-arrow">→</span>
-                      <span className="tac-deploy-dest">Standby at Event Exit · {results.primary_corridor}</span>
+                      <span className="tac-deploy-dest">{language === 'kn' ? 'ನಿರ್ಗಮನದಲ್ಲಿ ಸಿದ್ಧ ಸ್ಥಿತಿ' : 'Standby at Event Exit'} · {language === 'kn' ? (corridorTranslationsKn[results.primary_corridor || form.corridor] || results.primary_corridor || form.corridor) : (results.primary_corridor || form.corridor)}</span>
                     </div>
-                    <span className="tac-deploy-tag tac-tag-green">Standby</span>
+                    <span className="tac-deploy-tag tac-tag-green">{language === 'kn' ? 'ಸಿದ್ಧ ಸ್ಥಿತಿ' : 'Standby'}</span>
                   </div>
                   {(results.precision_barricades || []).map((junc, i) => (
                     <div className="tac-deploy-row" key={`bar-${i}`}>
@@ -1402,11 +1517,11 @@ ${juncsText}
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                       </span>
                       <div className="tac-deploy-info">
-                        <span className="tac-deploy-qty">{junc.barricades_needed} Barricade{junc.barricades_needed > 1 ? 's' : ''}</span>
+                        <span className="tac-deploy-qty">{junc.barricades_needed} {language === 'kn' ? 'ಬ್ಯಾರಿಕೇಡ್' : 'Barricade' + (junc.barricades_needed > 1 ? 's' : '')}</span>
                         <span className="tac-deploy-arrow">→</span>
                         <span className="tac-deploy-dest">{junc.name}</span>
                       </div>
-                      <span className="tac-deploy-tag tac-tag-red">Seal</span>
+                      <span className="tac-deploy-tag tac-tag-red">{language === 'kn' ? 'ಮುಚ್ಚು' : 'Seal'}</span>
                     </div>
                   ))}
                 </div>
@@ -1415,7 +1530,7 @@ ${juncsText}
               {/* ── PRIORITY CHOKE-POINT CARDS ── */}
               <div className="tac-section-header tac-header-red" style={{ marginTop: '24px' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                CHOKE-POINT PRIORITY CARDS
+                {language === 'kn' ? 'ಚೋಕ್-ಪಾಯಿಂಟ್ ಆದ್ಯತೆಯ ಕಾರ್ಡ್‌ಗಳು' : 'CHOKE-POINT PRIORITY CARDS'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
                 {(results.precision_barricades || []).map((junc, i) => {
@@ -1434,16 +1549,16 @@ ${juncsText}
                             {isCritical ? (
                               <>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: 'middle' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                CRITICAL CHOKE POINT
+                                {language === 'kn' ? 'ನಿರ್ಣಾಯಕ ಚೋಕ್ ಪಾಯಿಂಟ್' : 'CRITICAL CHOKE POINT'}
                               </>
                             ) : (
                               <>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: 'middle' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                SECONDARY CHOKE POINT
+                                {language === 'kn' ? 'ದ್ವಿತೀಯ ಚೋಕ್ ಪಾಯಿಂಟ್' : 'SECONDARY CHOKE POINT'}
                               </>
                             )}
                           </span>
-                          <span className="tac-priority-rank">Priority {i + 1}</span>
+                          <span className="tac-priority-rank">{language === 'kn' ? 'ಆದ್ಯತೆ' : 'Priority'} {i + 1}</span>
                         </div>
                         <div className="tac-impact-score-circle" style={{ background: isCritical ? 'rgba(255,59,48,0.1)' : 'rgba(255,149,0,0.1)', borderColor: isCritical ? '#ff3b30' : '#ff9500' }}>
                           <span style={{ fontSize: '1.4rem', fontWeight: 900, color: isCritical ? '#ff3b30' : '#ff9500', lineHeight: 1 }}>{impactScore}</span>
@@ -1452,29 +1567,37 @@ ${juncsText}
                       </div>
                       <div className="tac-priority-name">{junc.name}</div>
                       <div className="tac-priority-metrics">
-                        <div className="tac-metric-pill tac-pill-blue"><span>Queue Reduction</span><strong>{junc.efficiency_pct}%</strong></div>
-                        <div className="tac-metric-pill tac-pill-green"><span>Confidence</span><strong>{Math.min(96, Math.max(75, junc.efficiency_pct + 12))}%</strong></div>
-                        <div className="tac-metric-pill tac-pill-orange"><span>Closure Rate</span><strong>{junc.closure_rate_pct}%</strong></div>
+                        <div className="tac-metric-pill tac-pill-blue"><span>{language === 'kn' ? 'ಸರತಿಯ ಕಡಿತ' : 'Queue Reduction'}</span><strong>{junc.efficiency_pct}%</strong></div>
+                        <div className="tac-metric-pill tac-pill-green"><span>{language === 'kn' ? 'ವಿಶ್ವಾಸಾರ್ಹತೆ' : 'Confidence'}</span><strong>{Math.min(96, Math.max(75, junc.efficiency_pct + 12))}%</strong></div>
+                        <div className="tac-metric-pill tac-pill-orange"><span>{language === 'kn' ? 'ಮುಚ್ಚುವಿಕೆಯ ದರ' : 'Closure Rate'}</span><strong>{junc.closure_rate_pct}%</strong></div>
                       </div>
                       <div className="tac-priority-resources">
-                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Resources Required</span>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{language === 'kn' ? 'ಅಗತ್ಯವಿರುವ ಸಂಪನ್ಮೂಲಗಳು' : 'Resources Required'}</span>
                         <div style={{ display: 'flex', gap: '12px', marginTop: '6px', flexWrap: 'wrap' }}>
                           <span className="tac-resource-tag">
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', verticalAlign: 'middle' }}><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            {junc.barricades_needed} Barricade{junc.barricades_needed > 1 ? 's' : ''}
+                            {junc.barricades_needed} {language === 'kn' ? 'ಬ್ಯಾರಿಕೇಡ್' : 'Barricade' + (junc.barricades_needed > 1 ? 's' : '')}
                           </span>
                           <span className="tac-resource-tag">
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', verticalAlign: 'middle' }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                            {junc.officers_needed} Officer{junc.officers_needed > 1 ? 's' : ''}
+                            {junc.officers_needed} {language === 'kn' ? 'ಅಧಿಕಾರಿ' : 'Officer' + (junc.officers_needed > 1 ? 's' : '')}
                           </span>
                           <span className="tac-resource-tag">
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', verticalAlign: 'middle' }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            {junc.incident_count || '—'} hist. incidents
+                            {junc.incident_count || '—'} {language === 'kn' ? 'ಐತಿಹಾಸಿಕ ಘಟನೆಗಳು' : 'hist. incidents'}
                           </span>
                         </div>
                       </div>
                       <div className="tac-priority-reason">
-                        <strong>Reason:</strong> Receives {i === 0 ? 'highest' : i === 1 ? 'second highest' : 'significant'} upstream {form.event_cause.replace(/_/g,' ')} inflow on {results.primary_corridor} with {junc.incident_count || 0} historical incidents and a {junc.closure_rate_pct}% historical closure rate. Sealing this node intercepts downstream queue spillover.
+                        {language === 'kn' ? (
+                          <>
+                            <strong>ಕಾರಣ:</strong> {language === 'kn' ? (corridorTranslationsKn[results.primary_corridor || form.corridor] || results.primary_corridor || form.corridor) : (results.primary_corridor || form.corridor)} ಕಾರಿಡಾರ್‌ನಲ್ಲಿ {junc.incident_count || 0} ಐತಿಹಾಸಿಕ ಘಟನೆಗಳು ಮತ್ತು {junc.closure_rate_pct}% ಐತಿಹಾಸಿಕ ರಸ್ತೆ ಮುಚ್ಚುವಿಕೆಯ ದರದೊಂದಿಗೆ {i === 0 ? 'ಅತಿ ಹೆಚ್ಚು' : 'ಹೆಚ್ಚಿನ'} ಅಪ್‌ಸ್ಟ್ರೀಮ್ {t['cause_' + form.event_cause] || form.event_cause.replace(/_/g,' ')} ಒಳಹರಿವನ್ನು ಪಡೆಯುತ್ತದೆ. ಈ ನೋಡ್ ಅನ್ನು ಮುಚ್ಚುವುದರಿಂದ ಕೆಳಹರಿವಿನ ದಟ್ಟಣೆಯನ್ನು ತಡೆಯಬಹುದು.
+                          </>
+                        ) : (
+                          <>
+                            <strong>Reason:</strong> Receives {i === 0 ? 'highest' : i === 1 ? 'second highest' : 'significant'} upstream {form.event_cause.replace(/_/g,' ')} inflow on {results.primary_corridor} with {junc.incident_count || 0} historical incidents and a {junc.closure_rate_pct}% historical closure rate. Sealing this node intercepts downstream queue spillover.
+                          </>
+                        )}
                       </div>
                       <div className="choke-efficiency-bar-wrap" style={{ marginTop: '10px' }}>
                         <div className="choke-efficiency-bar" style={{ width: `${junc.efficiency_pct}%`, background: isCritical ? 'linear-gradient(90deg,#ff3b30,#ff6b35)' : 'linear-gradient(90deg,#ff9500,#ffcc00)' }} />
@@ -1488,20 +1611,20 @@ ${juncsText}
               <div style={{ marginTop: '24px' }}>
                 <div className="tac-section-header tac-header-blue">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-                  DIVERSION ROUTES
+                  {language === 'kn' ? 'ಪರ್ಯಾಯ ಮಾರ್ಗಗಳು' : 'DIVERSION ROUTES'}
                 </div>
                 <div className="tac-diversion-table-wrap" style={{ marginTop: '12px' }}>
                   <table className="tac-diversion-table">
-                    <thead><tr><th>Route</th><th>Priority</th><th>Extra Time</th><th>Capacity</th><th>Status</th></tr></thead>
+                    <thead><tr><th>{language === 'kn' ? 'ಮಾರ್ಗ' : 'Route'}</th><th>{language === 'kn' ? 'ಆದ್ಯತೆ' : 'Priority'}</th><th>{language === 'kn' ? 'ಹೆಚ್ಚುವರಿ ಸಮಯ' : 'Extra Time'}</th><th>{language === 'kn' ? 'ಸಾಮರ್ಥ್ಯ' : 'Capacity'}</th><th>{language === 'kn' ? 'ಸ್ಥಿತಿ' : 'Status'}</th></tr></thead>
                     <tbody>
                       {(results.alternate_routes || []).map((route, i) => {
-                        const extras = ['+4 min','+8 min','+12 min'];
-                        const caps = ['High','Medium','Low'];
-                        const stats = ['ACTIVATE','STANDBY','STANDBY'];
-                        const prios = ['Primary','Secondary','Tertiary'];
+                        const extras = language === 'kn' ? ['+೪ ನಿಮಿಷ', '+೮ ನಿಮಿಷ', '+೧೨ ನಿಮಿಷ'] : ['+4 min','+8 min','+12 min'];
+                        const caps = language === 'kn' ? ['ಹೆಚ್ಚು', 'ಮಧ್ಯಮ', 'ಕಡಿಮೆ'] : ['High','Medium','Low'];
+                        const stats = language === 'kn' ? ['ಸಕ್ರಿಯಗೊಳಿಸಿ', 'ಸಿದ್ಧ ಸ್ಥಿತಿ', 'ಸಿದ್ಧ ಸ್ಥಿತಿ'] : ['ACTIVATE','STANDBY','STANDBY'];
+                        const prios = language === 'kn' ? ['ಪ್ರಾಥಮಿಕ', 'ದ್ವಿತೀಯ', 'ತೃತೀಯ'] : ['Primary','Secondary','Tertiary'];
                         return (
                           <tr key={i}>
-                            <td><span className="tac-route-name">{route}</span></td>
+                            <td><span className="tac-route-name">{language === 'kn' ? (corridorTranslationsKn[route] || route) : route}</span></td>
                             <td><span className={`tac-priority-tag ${i === 0 ? 'tac-prio-primary' : 'tac-prio-secondary'}`}>{prios[i] || 'Secondary'}</span></td>
                             <td><span className="tac-extra-time">{extras[i] || '+15 min'}</span></td>
                             <td><span className={`tac-capacity-badge tac-cap-${(caps[i] || 'low').toLowerCase()}`}>{caps[i] || 'Low'}</span></td>
@@ -1512,8 +1635,8 @@ ${juncsText}
                     </tbody>
                   </table>
                   <div className="tac-diversion-footer">
-                    <span>🎯 Relieves: {results.precision_barricades?.[0]?.name || results.primary_corridor}</span>
-                    <span>🚗 Est. diverted: ~{Math.round((results.officers_recommended || 5) * 80)}/hr</span>
+                    <span>🎯 {language === 'kn' ? 'ಉಪಶಮನ:' : 'Relieves:'} {results.precision_barricades?.[0]?.name || results.primary_corridor}</span>
+                    <span>🚗 {language === 'kn' ? 'ಅಂದಾಜು ಬದಲಿಸಿದ ವಾಹನಗಳು:' : 'Est. diverted:'} ~{Math.round((results.officers_recommended || 5) * 80)}/{language === 'kn' ? 'ಗಂಟೆಗೆ' : 'hr'}</span>
                   </div>
                 </div>
               </div>
@@ -1522,17 +1645,17 @@ ${juncsText}
               <div style={{ marginTop: '24px' }}>
                 <div className="tac-section-header tac-header-blue">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-                  LIVE TACTICAL MAP
+                  {language === 'kn' ? 'ಲೈವ್ ತಾಂತ್ರಿಕ ನಕ್ಷೆ' : 'LIVE TACTICAL MAP'}
                 </div>
                 <div className="tac-map-legend">
-                  <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ff3b30', marginRight: '6px', verticalAlign: 'middle' }}></span>Incident Corridor</span>
-                  <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ff9500', marginRight: '6px', verticalAlign: 'middle' }}></span>Barricade Junction</span>
-                  <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#007aff', marginRight: '6px', verticalAlign: 'middle' }}></span>Diversion Route</span>
+                  <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ff3b30', marginRight: '6px', verticalAlign: 'middle' }}></span>{language === 'kn' ? 'ಘಟನೆಯ ಕಾರಿಡಾರ್' : 'Incident Corridor'}</span>
+                  <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ff9500', marginRight: '6px', verticalAlign: 'middle' }}></span>{language === 'kn' ? 'ಬ್ಯಾರಿಕೇಡ್ ಜಂಕ್ಷನ್' : 'Barricade Junction'}</span>
+                  <span><span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#007aff', marginRight: '6px', verticalAlign: 'middle' }}></span>{language === 'kn' ? 'ಪರ್ಯಾಯ ಮಾರ್ಗ' : 'Diversion Route'}</span>
                 </div>
                 <div id="planner-inline-map" className="tac-inline-map"></div>
                 <button className="btn-secondary" style={{ marginTop: '10px', width: '100%' }} onClick={(e) => { e.stopPropagation(); setShowMapModal(true); }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-                  Expand Map Modal
+                  {language === 'kn' ? 'ನಕ್ಷೆ ವಿಸ್ತರಿಸಿ' : 'Expand Map Modal'}
                 </button>
               </div>
 
@@ -1540,46 +1663,46 @@ ${juncsText}
               <div className="tac-outcome-hero">
                 <div className="tac-outcome-header">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                  PREDICTED OUTCOME — AFTER RECOMMENDATIONS APPLIED
+                  {language === 'kn' ? 'ನಿರೀಕ್ಷಿತ ಫಲಿತಾಂಶ — ಶಿಫಾರಸುಗಳನ್ನು ಅನ್ವಯಿಸಿದ ನಂತರ' : 'PREDICTED OUTCOME — AFTER RECOMMENDATIONS APPLIED'}
                 </div>
                 <div className="tac-outcome-grid">
                   <div className="tac-outcome-card tac-outcome-danger">
-                    <span className="tac-outcome-label">Current Congestion Risk</span>
+                    <span className="tac-outcome-label">{language === 'kn' ? 'ಪ್ರಸ್ತುತ ದಟ್ಟಣೆ ಅಪಾಯ' : 'Current Congestion Risk'}</span>
                     <span className="tac-outcome-value">{results.zone_congestion_risk}%</span>
-                    <span className="tac-outcome-sublabel">Before intervention</span>
+                    <span className="tac-outcome-sublabel">{language === 'kn' ? 'ಮಧ್ಯಸ್ಥಿಕೆಗೆ ಮೊದಲು' : 'Before intervention'}</span>
                   </div>
                   <div className="tac-outcome-arrow">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#34c759" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </div>
                   <div className="tac-outcome-card tac-outcome-success">
-                    <span className="tac-outcome-label">After Recommendations</span>
+                    <span className="tac-outcome-label">{language === 'kn' ? 'ಶಿಫಾರಸುಗಳ ನಂತರ' : 'After Recommendations'}</span>
                     <span className="tac-outcome-value">{Math.max(10, Math.round(results.zone_congestion_risk * 0.42))}%</span>
-                    <span className="tac-outcome-sublabel">Projected post-intervention</span>
+                    <span className="tac-outcome-sublabel">{language === 'kn' ? 'ಮಧ್ಯಸ್ಥಿಕೆಯ ನಂತರ ನಿರೀಕ್ಷಿತ' : 'Projected post-intervention'}</span>
                   </div>
                 </div>
                 <div className="tac-outcome-stats">
                   <div className="tac-stat-item">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '4px' }}><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
                     <span className="tac-stat-value">{Math.round(results.zone_congestion_risk * 0.58)}%</span>
-                    <span className="tac-stat-label">Congestion Reduction</span>
+                    <span className="tac-stat-label">{language === 'kn' ? 'ದಟ್ಟಣೆ ಕಡಿತ' : 'Congestion Reduction'}</span>
                   </div>
                   <div className="tac-stat-divider"/>
                   <div className="tac-stat-item">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '4px' }}><polyline points="20 6 9 17 4 12"/></svg>
-                    <span className="tac-stat-value">{results.travel_delay_min ? Math.round(results.travel_delay_min * 0.55) : '—'} min</span>
-                    <span className="tac-stat-label">Avg Delay Saved</span>
+                    <span className="tac-stat-value">{results.travel_delay_min ? Math.round(results.travel_delay_min * 0.55) : '—'} {language === 'kn' ? 'ನಿಮಿಷ' : 'min'}</span>
+                    <span className="tac-stat-label">{language === 'kn' ? 'ಉಳಿಸಿದ ಸರಾಸರಿ ವಿಳಂಬ' : 'Avg Delay Saved'}</span>
                   </div>
                   <div className="tac-stat-divider"/>
                   <div className="tac-stat-item">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '4px' }}><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-                    <span className="tac-stat-value">~{Math.round((results.officers_recommended || 5) * 80 * 1.3)}/hr</span>
-                    <span className="tac-stat-label">Vehicles Redirected</span>
+                    <span className="tac-stat-value">~{Math.round((results.officers_recommended || 5) * 80 * 1.3)}/{language === 'kn' ? 'ಗಂ' : 'hr'}</span>
+                    <span className="tac-stat-label">{language === 'kn' ? 'ಮಾರ್ಗ ಬದಲಿಸಿದ ವಾಹನಗಳು' : 'Vehicles Redirected'}</span>
                   </div>
                   <div className="tac-stat-divider"/>
                   <div className="tac-stat-item">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '4px' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    <span className="tac-stat-value">{results.estimated_resolution_time_min >= 60 ? `${(results.estimated_resolution_time_min / 60).toFixed(1)} hrs` : `${results.estimated_resolution_time_min.toFixed(0)} min`}</span>
-                    <span className="tac-stat-label">Clearance Time</span>
+                    <span className="tac-stat-value">{results.estimated_resolution_time_min >= 60 ? `${(results.estimated_resolution_time_min / 60).toFixed(1)} ${language === 'kn' ? 'ಗಂಟೆ' : 'hrs'}` : `${results.estimated_resolution_time_min.toFixed(0)} ${language === 'kn' ? 'ನಿಮಿಷ' : 'min'}`}</span>
+                    <span className="tac-stat-label">{language === 'kn' ? 'ತೆರವು ಸಮಯ' : 'Clearance Time'}</span>
                   </div>
                 </div>
               </div>
@@ -1593,30 +1716,30 @@ ${juncsText}
                     </svg>
                   </div>
                   <h3 style={{ fontSize: '1.05rem', color: '#34c759', textTransform: 'uppercase', margin: 0, fontWeight: 800 }}>
-                    5. Commander's WhatsApp Dispatch
+                    {language === 'kn' ? '೫. ಕಮಾಂಡರ್ WhatsApp ರವಾನೆ' : "5. Commander's WhatsApp Dispatch"}
                   </h3>
                 </div>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '14px', fontWeight: 600 }}>
-                  Generate and send a formatted operational deployment brief directly to the selected field commander's WhatsApp.
+                  {language === 'kn' ? 'ಆಯ್ಕೆಮಾಡಿದ ಕ್ಷೇತ್ರ ಕಮಾಂಡರ್‌ನ WhatsApp ಸಂಖ್ಯೆಗೆ ನೇರವಾಗಿ ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿದ ಕಾರ್ಯಾಚರಣೆಯ ನಿಯೋಜನೆ ವರದಿಯನ್ನು ರಚಿಸಿ ಮತ್ತು ಕಳುಹಿಸಿ.' : "Generate and send a formatted operational deployment brief directly to the selected field commander's WhatsApp."}
                 </p>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap', width: '100%' }}>
                   <div className="form-group" style={{ flex: 1, margin: 0, minWidth: '200px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>Select Recipients</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>{language === 'kn' ? 'ಸ್ವೀಕೃತದಾರರನ್ನು ಆಯ್ಕೆಮಾಡಿ' : 'Select Recipients'}</label>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button 
                           type="button" 
                           style={{ padding: '2px 6px', fontSize: '0.68rem', width: 'auto', margin: 0, background: 'none', border: '1px solid var(--border-color)', color: 'var(--primary)', cursor: 'pointer', borderRadius: '4px', fontWeight: 700 }}
                           onClick={() => setSelectedCommanders(personnel.map((_, i) => i))}
                         >
-                          All
+                          {language === 'kn' ? 'ಎಲ್ಲಾ' : 'All'}
                         </button>
                         <button 
                           type="button" 
                           style={{ padding: '2px 6px', fontSize: '0.68rem', width: 'auto', margin: 0, background: 'none', border: '1px solid var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', borderRadius: '4px', fontWeight: 700 }}
                           onClick={() => setSelectedCommanders([])}
                         >
-                          Clear
+                          {language === 'kn' ? 'ತೆರವುಗೊಳಿಸಿ' : 'Clear'}
                         </button>
                       </div>
                     </div>
@@ -1632,7 +1755,7 @@ ${juncsText}
                       gap: '8px'
                     }}>
                       {personnel.length === 0 ? (
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No commanders configured</span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{language === 'kn' ? 'ಯಾವುದೇ ಕಮಾಂಡರ್‌ಗಳನ್ನು ಸಂರಚಿಸಲಾಗಿಲ್ಲ' : 'No commanders configured'}</span>
                       ) : (
                         personnel.map((p, i) => (
                           <label key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)' }}>
@@ -1656,10 +1779,10 @@ ${juncsText}
                   </div>
                   
                   <div className="form-group" style={{ width: '180px', margin: 0 }}>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dispatch Method</label>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{language === 'kn' ? 'ರವಾನೆ ವಿಧಾನ' : 'Dispatch Method'}</label>
                     <select id="whatsapp-method-select" defaultValue="twilio">
-                      <option value="twilio">Twilio API (Sandbox)</option>
-                      <option value="whatsapp_web">WhatsApp Web (Direct)</option>
+                      <option value="twilio">{language === 'kn' ? 'Twilio API (ಸ್ಯಾಂಡ್‌ಬಾಕ್ಸ್)' : 'Twilio API (Sandbox)'}</option>
+                      <option value="whatsapp_web">{language === 'kn' ? 'WhatsApp Web (ನೇರ)' : 'WhatsApp Web (Direct)'}</option>
                     </select>
                   </div>
 
@@ -1690,7 +1813,7 @@ ${juncsText}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="3 11 22 2 13 21 11 13 3 11" />
                     </svg>
-                    {selectedCommanders.length > 1 ? `Dispatch (${selectedCommanders.length})` : 'Dispatch Brief'}
+                    {selectedCommanders.length > 1 ? (language === 'kn' ? `ರವಾನಿಸಿ (${selectedCommanders.length})` : `Dispatch (${selectedCommanders.length})`) : (language === 'kn' ? 'ವರದಿ ರವಾನಿಸಿ' : 'Dispatch Brief')}
                   </button>
                 </div>
               </div>
@@ -1726,7 +1849,7 @@ ${juncsText}
                   <line x1="12" y1="18" x2="12.01" y2="18"/>
                   <line x1="12" y1="10" x2="12" y2="14"/>
                 </svg>
-                7. What-If Scenario Simulator
+                7. {language === 'kn' ? 'ವಾಟ್-ಇಫ್ ಸನ್ನಿವೇಶ ಸಿಮ್ಯುಲೇಟರ್' : 'What-If Scenario Simulator'}
               </button>
 
               {/* ── CONDITIONAL PLANNED DURATION ── */}
@@ -1734,11 +1857,11 @@ ${juncsText}
                 <div className="result-card full-width-result" style={{ borderLeft: '4px solid #007aff', backgroundColor: '#eef7ff', marginTop: '16px' }}>
                   <h4 style={{ color: '#007aff', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Planned vs Forecasted Duration
+                    {language === 'kn' ? 'ಯೋಜಿತ ಮತ್ತು ಊಹಿಸಲಾದ ಅವಧಿ' : 'Planned vs Forecasted Duration'}
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '8px' }}>
-                    <div><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Your Scheduled Time</span><div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#1d1d1f' }}>{plannedDurationStr}</div></div>
-                    <div><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>AI Forecast Clearance</span><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--primary)' }}>{results.estimated_resolution_time_min >= 60 ? `${(results.estimated_resolution_time_min / 60).toFixed(1)} hrs` : `${results.estimated_resolution_time_min.toFixed(0)} min`}</div></div>
+                    <div><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{language === 'kn' ? 'ನಿಮ್ಮ ನಿಗದಿತ ಸಮಯ' : 'Your Scheduled Time'}</span><div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#1d1d1f' }}>{plannedDurationStr}</div></div>
+                    <div><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{language === 'kn' ? 'AI முನ್ಸೂಚನೆ ತೆರವು ಸಮಯ' : 'AI Forecast Clearance'}</span><div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--primary)' }}>{results.estimated_resolution_time_min >= 60 ? `${(results.estimated_resolution_time_min / 60).toFixed(1)} ${language === 'kn' ? 'ಗಂಟೆಗಳು' : 'hrs'}` : `${results.estimated_resolution_time_min.toFixed(0)} ${language === 'kn' ? 'ನಿಮಿಷ' : 'min'}`}</div></div>
                   </div>
                 </div>
               )}
@@ -1747,9 +1870,9 @@ ${juncsText}
               <div style={{ marginTop: '24px', padding: '20px 24px', background: 'linear-gradient(135deg, #fff4ec, #fff9f5)', border: '1.5px solid rgba(234,117,14,0.2)', borderRadius: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
-                    <div style={{ fontWeight: 800, fontSize: '1rem', color: '#1d1d1f' }}>Event Resolved?</div>
+                    <div style={{ fontWeight: 800, fontSize: '1rem', color: '#1d1d1f' }}>{language === 'kn' ? 'ಘಟನೆ ಬಗೆಹರಿದಿದೆಯೇ?' : 'Event Resolved?'}</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '3px' }}>
-                      Log actual outcomes to auto-calibrate the ML model for future predictions
+                      {language === 'kn' ? 'ಭವಿಷ್ಯದ ಮುನ್ಸೂಚನೆಗಳಿಗಾಗಿ ML ಮಾದರಿಯನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮಾಪನಾಂಕು ಮಾಡಲು ನೈಜ ಫಲಿತಾಂಶಗಳನ್ನು ದಾಖಲಿಸಿ' : 'Log actual outcomes to auto-calibrate the ML model for future predictions'}
                     </div>
                   </div>
                   <button
@@ -1783,7 +1906,7 @@ ${juncsText}
                       <path d="M9 11l3 3L22 4"/>
                       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                     </svg>
-                    Close Event & Log to ML
+                    {language === 'kn' ? 'ಘಟನೆ ಮುಚ್ಚಿ ಮತ್ತು ML ಗೆ ದಾಖಲಿಸಿ' : 'Close Event & Log to ML'}
                   </button>
                 </div>
               </div>
@@ -1797,7 +1920,7 @@ ${juncsText}
                   <line x1="15" y1="6" x2="15" y2="21" />
                 </svg>
               </span>
-              <p>Configure parameters on the left and trigger prediction to calculate operational plans.</p>
+              <p>{language === 'kn' ? 'ಕಾರ್ಯಾಚರಣೆ ಯೋಜನೆಗಳನ್ನು ಲೆಕ್ಕಹಾಕಲು ಎಡಭಾಗದಲ್ಲಿ ನಿಯತಾಂಕಗಳನ್ನು ಸಂರಚಿಸಿ ಮತ್ತು ಪ್ರಭಾವದ ಮುನ್ಸೂಚನೆಯನ್ನು ಚಲಾಯಿಸಿ.' : 'Configure parameters on the left and trigger prediction to calculate operational plans.'}</p>
             </div>
           )}
 
@@ -1814,12 +1937,12 @@ ${juncsText}
             </div>
             <div className="modal-body">
               <div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.8px', display: 'block', marginBottom: '10px' }}>Metric Value</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.8px', display: 'block', marginBottom: '10px' }}>{language === 'kn' ? 'ಮೆಟ್ರಿಕ್ ಮೌಲ್ಯ' : 'Metric Value'}</span>
                 <span className="modal-metric-badge">{modalData.value}</span>
               </div>
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.8px', display: 'block', marginBottom: '14px' }}>
-                  AI Reasoning & Analysis
+                  {language === 'kn' ? 'AI ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ತರ್ಕ' : 'AI Reasoning & Analysis'}
                 </span>
                 <p style={{ fontWeight: 600, color: 'var(--text-dark)', lineHeight: 1.8, whiteSpace: 'pre-line', fontSize: '0.95rem' }}>{modalData.text}</p>
               </div>
@@ -1839,13 +1962,13 @@ ${juncsText}
                   <line x1="9" y1="3" x2="9" y2="18" />
                   <line x1="15" y1="6" x2="15" y2="21" />
                 </svg>
-                Diversion Map Visualization
+                {language === 'kn' ? 'ಮಾರ್ಗ ಬದಲಾವಣೆ ನಕ್ಷೆಯ ದೃಶ್ಯೀಕರಣ' : 'Diversion Map Visualization'}
               </h3>
               <button className="modal-close-btn" onClick={() => setShowMapModal(false)}>&times;</button>
             </div>
             <div className="modal-body">
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px', fontWeight: 600 }}>
-                Showing primary incident site (red), recommended detours (blue), and barricade zones (orange).
+                {language === 'kn' ? 'ಪ್ರಾಥಮಿಕ ಘಟನಾ ಸ್ಥಳ (ಕೆಂಪು), ಶಿಫಾರಸು ಮಾಡಿದ ಪರ್ಯಾಯ ಮಾರ್ಗಗಳು (ನೀಲಿ) ಮತ್ತು ಬ್ಯಾರಿಕೇಡ್ ವಲಯಗಳನ್ನು (ಕಿತ್ತಳೆ) ತೋರಿಸಲಾಗುತ್ತಿದೆ.' : 'Showing primary incident site (red), recommended detours (blue), and barricade zones (orange).'}
               </p>
               <div id="map-view" className="map-view-container"></div>
             </div>
@@ -1864,7 +1987,7 @@ ${juncsText}
                   <line x1="12" y1="18" x2="12.01" y2="18"/>
                   <line x1="12" y1="10" x2="12" y2="14"/>
                 </svg>
-                7. What-If Scenario Simulator Chatbot
+                {language === 'kn' ? '೭. ವಾಟ್-ಇಫ್ ಸನ್ನಿವೇಶ ಸಿಮ್ಯುಲೇಟರ್ ಚಾಟ್‌ಬಾಟ್' : '7. What-If Scenario Simulator Chatbot'}
               </h3>
               <button className="modal-close-btn" onClick={() => setShowSimulationModal(false)}>&times;</button>
             </div>
@@ -1883,11 +2006,17 @@ ${juncsText}
               ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}
             >
               <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, margin: '4px 0 12px' }}>
-                USP: "Traffic planning through simulation before execution."
+                {language === 'kn' ? 'ಯುಎಸ್‌ಪಿ: "ಅನುಷ್ಠಾನದ ಮೊದಲು ಸಿಮ್ಯುಲೇಶನ್ ಮೂಲಕ ಸಂಚಾರ ಯೋಜನೆ."' : 'USP: "Traffic planning through simulation before execution."'}
               </div>
 
               {simulationChat.map((msg, index) => {
                 const isUser = msg.sender === 'user';
+                let textToShow = msg.text;
+                if (index === 0 && msg.sender === 'bot') {
+                  textToShow = language === 'kn'
+                    ? 'ವಾಟ್-ಇಫ್ ಸಿನಾರಿಯೋ ಸಿಮ್ಯುಲೇಟರ್‌ಗೆ ಸುಸ್ವಾಗತ.\n\nಯಾವುದೇ ಯುದ್ಧತಂತ್ರದ ಸಿನಾರಿಯೋವನ್ನು ಕೇಳಿ (ಉದಾಹರಣೆಗೆ ರಸ್ತೆ ಮುಚ್ಚುವುದು ಅಥವಾ ಸಿಬ್ಬಂದಿಯನ್ನು ಬದಲಾಯಿಸುವುದು) ಮತ್ತು ನಾನು ನಿಮಗಾಗಿ ನಿರ್ದಿಷ್ಟ ಕಾರ್ಯಾಚರಣೆಯ ಪರ್ಯಾಯ ಯೋಜನೆಯನ್ನು ರಚಿಸುತ್ತೇನೆ.'
+                    : 'Welcome to the What-If Scenario Simulator.\n\nAsk me any tactical scenario (e.g. closing a road or changing personnel) and I will generate a concrete location-specific operational alternative plan for you.';
+                }
                 return (
                   <div 
                     key={index} 
@@ -1900,7 +2029,7 @@ ${juncsText}
                     }}
                   >
                     <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 800, alignSelf: isUser ? 'flex-end' : 'flex-start', paddingLeft: isUser ? 0 : '4px', paddingRight: isUser ? '4px' : 0 }}>
-                      {isUser ? 'Dispatcher' : 'AI Simulator Bot'}
+                      {isUser ? (language === 'kn' ? 'ರವಾನೆದಾರ' : 'Dispatcher') : (language === 'kn' ? 'AI ಸಿಮ್ಯುಲೇಟರ್ ಬಾಟ್' : 'AI Simulator Bot')}
                     </span>
                     <div 
                       style={{ 
@@ -1916,7 +2045,7 @@ ${juncsText}
                         lineHeight: 1.5
                       }}
                     >
-                      {renderChatBubbleContent(msg.text)}
+                      {renderChatBubbleContent(textToShow)}
                     </div>
                   </div>
                 );
@@ -1924,7 +2053,7 @@ ${juncsText}
 
               {simulating && (
                 <div style={{ alignSelf: 'flex-start', maxWidth: '85%', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 800 }}>AI Simulator Bot</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 800 }}>{language === 'kn' ? 'AI ಸಿಮ್ಯುಲೇಟರ್ ಬಾಟ್' : 'AI Simulator Bot'}</span>
                   <div style={{ backgroundColor: 'white', border: '1px solid rgba(0,122,255,0.15)', borderLeft: '4px solid #ff9500', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
                     <Loader />
                   </div>
@@ -1933,7 +2062,7 @@ ${juncsText}
 
               {simulationError && (
                 <div style={{ alignSelf: 'center', color: '#ff3b30', background: 'rgba(255,59,48,0.08)', padding: '10px 16px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700 }}>
-                  Error: {simulationError}
+                  {language === 'kn' ? 'ದೋಷ' : 'Error'}: {simulationError}
                 </div>
               )}
             </div>
@@ -1943,14 +2072,14 @@ ${juncsText}
               
               {/* Presets Suggestion Chips */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, width: '100%', marginBottom: '4px' }}>Simulation Presets:</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, width: '100%', marginBottom: '4px' }}>{language === 'kn' ? 'ಸಿಮ್ಯುಲೇಶನ್ ಪೂರ್ವನಿಗದಿಗಳು:' : 'Simulation Presets:'}</span>
                 <button 
                   type="button" 
                   className="tac-sim-preset-btn"
                   style={{ padding: '6px 12px', fontSize: '0.72rem' }}
                   onClick={() => handleSimulate("What if we close Road A?")}
                 >
-                  "What if we close Road A?"
+                  {language === 'kn' ? '"ನಾವು ರೋಡ್ ಎ ಮುಚ್ಚಿದರೆ ಏನು?"' : '"What if we close Road A?"'}
                 </button>
                 <button 
                   type="button" 
@@ -1958,7 +2087,7 @@ ${juncsText}
                   style={{ padding: '6px 12px', fontSize: '0.72rem' }}
                   onClick={() => handleSimulate("What if attendance increases by 30%?")}
                 >
-                  "What if attendance increases by 30%?"
+                  {language === 'kn' ? '"ಹಾಜರಾತಿ 30% ಹೆಚ್ಚಾದರೆ ಏನು?"' : '"What if attendance increases by 30%?"'}
                 </button>
                 <button 
                   type="button" 
@@ -1966,7 +2095,7 @@ ${juncsText}
                   style={{ padding: '6px 12px', fontSize: '0.72rem' }}
                   onClick={() => handleSimulate("What if rain occurs during the event?")}
                 >
-                  "What if rain occurs during the event?"
+                  {language === 'kn' ? '"ಕಾರ್ಯಕ್ರಮದ ಸಮಯದಲ್ಲಿ ಮಳೆ ಬಂದರೆ ಏನು?"' : '"What if rain occurs during the event?"'}
                 </button>
                 <button 
                   type="button" 
@@ -1974,7 +2103,7 @@ ${juncsText}
                   style={{ padding: '6px 12px', fontSize: '0.72rem' }}
                   onClick={() => handleSimulate("What if we double the police deployment?")}
                 >
-                  "What if we double police?"
+                  {language === 'kn' ? '"ನಾವು ಪೊಲೀಸ್ ನಿಯೋಜನೆಯನ್ನು ದ್ವಿಗುಣಗೊಳಿಸಿದರೆ ಏನು?"' : '"What if we double police?"'}
                 </button>
               </div>
 
@@ -1982,7 +2111,7 @@ ${juncsText}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <input 
                     type="text" 
-                    placeholder="Ask another scenario (e.g. What if there is only one officer?)..."
+                    placeholder={language === 'kn' ? 'ಬೇರೆ ಸನ್ನಿವೇಶವನ್ನು ಕೇಳಿ (ಉದಾ. ಕೇವಲ ಒಬ್ಬ ಅಧಿಕಾರಿ ಇದ್ದರೆ ಏನು?)...' : 'Ask another scenario (e.g. What if there is only one officer?)...'}
                     value={simulationQuery}
                     onChange={(e) => setSimulationQuery(e.target.value)}
                     disabled={simulating}
@@ -2012,7 +2141,7 @@ ${juncsText}
                       boxShadow: '0 2px 8px rgba(0,122,255,0.2)'
                     }}
                   >
-                    Send
+                    {language === 'kn' ? 'ಕಳುಹಿಸಿ' : 'Send'}
                   </button>
                 </div>
               </form>

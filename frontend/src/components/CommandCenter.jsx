@@ -1,7 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Loader from './Loader';
+import { translations } from '../translations';
 
-export default function CommandCenter() {
+const corridorTranslationsKn = {
+  'Mysore Road': 'ಮೈಸೂರು ರಸ್ತೆ',
+  'Bellary Road 1': 'ಬಳ್ಳಾರಿ ರಸ್ತೆ 1',
+  'Tumkur Road': 'ತುಮಕೂರು ರಸ್ತೆ',
+  'Bellary Road 2': 'ಬಳ್ಳಾರಿ ರಸ್ತೆ 2',
+  'Hosur Road': 'ಹೊಸೂರು ರಸ್ತೆ',
+  'ORR North 1': 'ಹೊರ ವರ್ತುಲ ರಸ್ತೆ ಉತ್ತರ 1',
+  'Old Madras Road': 'ಹಳೇ ಮದ್ರಾಸ್ ರಸ್ತೆ',
+  'Magadi Road': 'ಮಾಗಡಿ ರಸ್ತೆ',
+  'ORR East 1': 'ಹೊರ ವರ್ತುಲ ರಸ್ತೆ ಪೂರ್ವ 1',
+  'Non-corridor': 'ಕಾರಿಡಾರ್ ಅಲ್ಲದ ರಸ್ತೆ'
+};
+
+export default function CommandCenter({ language }) {
+  const t = translations[language] || translations.en;
+  
+  const translateRecommendation = (act) => {
+    if (language !== 'kn') return act;
+    let translated = act;
+    Object.keys(corridorTranslationsKn).forEach(engName => {
+      translated = translated.replace(new RegExp(engName, 'g'), corridorTranslationsKn[engName]);
+    });
+    translated = translated
+      .replace(/Deploy (\d+) officers/gi, '$1 ಅಧಿಕಾರಿಗಳನ್ನು ನಿಯೋಜಿಸಿ')
+      .replace(/Deploy (\d+) barricades/gi, '$1 ಬ್ಯಾರಿಕೇಡ್‌ಗಳನ್ನು ನಿಯೋಜಿಸಿ')
+      .replace(/Divert traffic via/gi, 'ಸಂಚಾರವನ್ನು ಬದಲಾಯಿಸಿ:')
+      .replace(/Broadcast warning/gi, 'ಎಚ್ಚರಿಕೆಯನ್ನು ಪ್ರಸಾರ ಮಾಡಿ')
+      .replace(/Notify police station/gi, 'ಪೊಲೀಸ್ ಠಾಣೆಗೆ ಸೂಚಿಸಿ')
+      .replace(/Emergency clearing crew/gi, 'ತುರ್ತು ತೆರವು ದಳ');
+    return translated;
+  };
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [horizon, setHorizon] = useState('+0');
@@ -226,7 +257,7 @@ export default function CommandCenter() {
         <div class="cc-hotspot-pin">
           <span class="cc-hotspot-pin-icon">${defaultIconEmoji}</span>
           <div class="cc-hotspot-tooltip">
-            <strong>${name}</strong><br/>
+            <strong>${language === 'kn' ? (corridorTranslationsKn[name] || name) : name}</strong><br/>
             ${desc}
           </div>
         </div>
@@ -243,12 +274,12 @@ export default function CommandCenter() {
 
     // Draw intersections
     dynamicIntersections.forEach((item, idx) => {
-      addPinToMap(item, idx, "📍", "High congestion stacking near intersection");
+      addPinToMap(item, idx, "📍", language === 'kn' ? t.cc_high_congestion_stacking : "High congestion stacking near intersection");
     });
 
     // Draw roads
     dynamicRoads.forEach((item, idx) => {
-      addPinToMap(item, idx, "🛣️", "Severe delay along this corridor segment");
+      addPinToMap(item, idx, "🛣️", language === 'kn' ? t.cc_severe_delay_segment : "Severe delay along this corridor segment");
     });
 
     // 🚨 2. Pulse anomaly dot at center (Core Hotspot)
@@ -256,8 +287,8 @@ export default function CommandCenter() {
       <div class="cc-pulsing-hotspot-wrapper">
         <div class="cc-pulsing-hotspot"></div>
         <div class="cc-pulsing-tooltip">
-          <strong>EMERGING CORE HOTSPOT</strong><br/>
-          ${data.event?.title || "Majestic Traffic Segment Control Node"}
+          <strong>${t.cc_emerging_core}</strong><br/>
+          ${data.event?.title || (language === 'kn' ? "ಮಹೋನ್ನತ ಸಂಚಾರ ನಿಯಂತ್ರಣ ಕೇಂದ್ರ" : "Majestic Traffic Segment Control Node")}
         </div>
       </div>
     `;
@@ -316,10 +347,10 @@ export default function CommandCenter() {
           </svg>
         </div>
         <h3 style={{ color: 'var(--text-dark)', fontWeight: 800, margin: '0 0 10px 0', fontSize: '1.4rem' }}>
-          CYBERNETIC MONITORING FEED PAUSED
+          {t.cc_paused_title}
         </h3>
         <p style={{ color: 'var(--text-muted)', maxWidth: '400px', fontSize: '0.9rem', fontWeight: 600, marginBottom: '24px', lineHeight: '1.5' }}>
-          Live API triggers and forecast loops are currently suspended to preserve system resources. Click below to initialize the command feeds.
+          {t.cc_paused_desc}
         </p>
         <button 
           onClick={() => {
@@ -342,7 +373,7 @@ export default function CommandCenter() {
             transition: 'all 0.2s'
           }}
         >
-          <span>▶️</span> INITIALIZE FEEDS
+          <span>▶️</span> {t.cc_initialize_feeds}
         </button>
       </div>
     );
@@ -352,7 +383,7 @@ export default function CommandCenter() {
     return (
       <div className="cc-container" style={{ minHeight: '500px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <Loader />
-        <h3 style={{ marginTop: '20px', color: 'var(--text-dark)', fontWeight: 800 }}>AI Engine Initializing Cybernetic Monitoring Feeds...</h3>
+        <h3 style={{ marginTop: '20px', color: 'var(--text-dark)', fontWeight: 800 }}>{t.cc_initializing}</h3>
       </div>
     );
   }
@@ -390,7 +421,7 @@ export default function CommandCenter() {
 
   // Cache age display
   const cacheAgeMin = data ? Math.floor((data.cache_age_seconds || 0) / 60) : 0;
-  const cacheAgeDisplay = cacheAgeMin === 0 ? 'just now' : `${cacheAgeMin}m ago`;
+  const cacheAgeDisplay = cacheAgeMin === 0 ? (language === 'kn' ? 'ಇದೀಗ' : 'just now') : `${cacheAgeMin}${language === 'kn' ? 'ನಿಮಿಷಗಳ ಹಿಂದೆ' : 'm ago'}`;
 
   return (
     <div className="cc-container">
@@ -405,16 +436,16 @@ export default function CommandCenter() {
       {/* HEADER SECTION */}
       <div className="cc-header">
         <div className="cc-title-area">
-          <h2>SMART CITY COMMAND CONSOLE</h2>
+          <h2>{t.cc_console_title}</h2>
           <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            🛰️ Real-time Disruption Forecast Core · Unplanned Incident Sector
+            🛰️ {t.cc_sector_desc}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           {/* Freshness badge */}
           {data && (
             <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '3px 8px' }}>
-              🔄 Refreshed {data.last_refreshed || cacheAgeDisplay}
+              🔄 {t.cc_refreshed} {data.last_refreshed || cacheAgeDisplay}
             </span>
           )}
           <button 
@@ -432,7 +463,7 @@ export default function CommandCenter() {
               transition: 'all 0.2s'
             }}
           >
-            {refreshing ? '⚡ RUNNING APIS...' : '⚡ RETRIGGER APIS'}
+            {refreshing ? (language === 'kn' ? '⚡ APIs ಚಾಲನೆಯಲ್ಲಿದೆ...' : '⚡ RUNNING APIS...') : `⚡ ${t.cc_retrigger}`}
           </button>
           <button 
             onClick={() => {
@@ -453,10 +484,10 @@ export default function CommandCenter() {
               transition: 'all 0.2s'
             }}
           >
-            {autoPlay ? '⏸️ PAUSE AUTO-PLAY' : '▶️ PLAY CYCLIC FORECAST'}
+            {autoPlay ? `⏸️ ${t.cc_pause_forecast}` : `▶️ ${t.cc_play_forecast}`}
           </button>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700 }}>
-            LIVE: {liveNow.toLocaleTimeString()}
+            {t.cc_live}: {liveNow.toLocaleTimeString()}
           </span>
         </div>
       </div>
@@ -476,38 +507,38 @@ export default function CommandCenter() {
 
               {/* Map Legend Overlay */}
               <div className="cc-map-overlay-layer">
-                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '4px', textTransform: 'uppercase' }}>Legend</div>
+                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '4px', textTransform: 'uppercase' }}>{t.cc_legend}</div>
                 <div className="cc-map-legend-item">
                   <span className="cc-map-legend-dot" style={{ backgroundColor: '#34c759' }} />
-                  🟢 Normal Traffic
+                  🟢 {t.cc_normal_traffic}
                 </div>
                 <div className="cc-map-legend-item">
                   <span className="cc-map-legend-dot" style={{ backgroundColor: '#ff9500' }} />
-                  🟡 Moderate Congestion
+                  🟡 {t.cc_mod_congestion}
                 </div>
                 <div className="cc-map-legend-item">
                   <span className="cc-map-legend-dot" style={{ backgroundColor: '#ff3b30' }} />
-                  🔴 High Congestion
+                  🔴 {t.cc_high_congestion}
                 </div>
                 <div className="cc-map-legend-item">
                   <span className="cc-map-legend-dot" style={{ backgroundColor: '#1d1d1f', border: '1px solid rgba(0,0,0,0.1)' }} />
-                  ⚫ Critical Congestion
+                  ⚫ {t.cc_crit_congestion}
                 </div>
               </div>
 
               {/* Forecast Horizon Sliders */}
               <div className="cc-time-horizon-selector">
                 <button className={`cc-horizon-btn ${horizon === '+0' ? 'active' : ''}`} onClick={() => { setHorizon('+0'); setAutoPlay(false); }}>
-                  Current Traffic Layer
+                  {t.cc_current_layer}
                 </button>
                 <button className={`cc-horizon-btn ${horizon === '+15' ? 'active' : ''}`} onClick={() => { setHorizon('+15'); setAutoPlay(false); }}>
-                  +15 Minute Forecast
+                  {t.cc_15m_forecast}
                 </button>
                 <button className={`cc-horizon-btn ${horizon === '+30' ? 'active' : ''}`} onClick={() => { setHorizon('+30'); setAutoPlay(false); }}>
-                  +30 Minute Forecast
+                  {t.cc_30m_forecast}
                 </button>
                 <button className={`cc-horizon-btn ${horizon === '+60' ? 'active' : ''}`} onClick={() => { setHorizon('+60'); setAutoPlay(false); }}>
-                  +60 Minute Forecast
+                  {t.cc_60m_forecast}
                 </button>
               </div>
             </div>
@@ -516,24 +547,24 @@ export default function CommandCenter() {
           {/* 2. AI DECISION PIPELINE */}
           <div className="cc-card">
             <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              🧠 Anomaly Identification & Decision Pipeline
+              🧠 {t.cc_pipeline_title}
             </h3>
             <div className="cc-pipeline-container">
               <div className="cc-pipeline-nodes">
                 <div className="cc-pipeline-node">
-                  <span>🚗 Traffic Anomaly</span>
+                  <span>🚗 {t.cc_traffic_anomaly}</span>
                   <span style={{ fontSize: '0.58rem', color: 'var(--danger)' }}>{pipe.traffic_anomaly}</span>
                 </div>
                 <div className="cc-pipeline-node">
-                  <span>📍 GPS Density Spike</span>
+                  <span>📍 {t.cc_gps_spike}</span>
                   <span style={{ fontSize: '0.58rem', color: 'var(--danger)' }}>{pipe.gps_spike}</span>
                 </div>
                 <div className="cc-pipeline-node">
-                  <span>💬 Social Buzz Spike</span>
+                  <span>💬 {t.cc_social_spike}</span>
                   <span style={{ fontSize: '0.58rem', color: 'var(--danger)' }}>{pipe.social_buzz}</span>
                 </div>
                 <div className="cc-pipeline-node">
-                  <span>🌧️ Weather Conditions</span>
+                  <span>🌧️ {t.cc_weather}</span>
                   <span style={{ fontSize: '0.58rem', color: 'var(--danger)' }}>{pipe.weather}</span>
                 </div>
               </div>
@@ -543,7 +574,7 @@ export default function CommandCenter() {
               </div>
 
               <div className="cc-pipeline-engine">
-                <span>🧠 Event Detection Engine</span>
+                <span>🧠 {t.cc_detection_engine}</span>
               </div>
 
               <div className="cc-pipeline-flow-connector">
@@ -551,7 +582,7 @@ export default function CommandCenter() {
               </div>
 
               <div style={{ color: 'var(--danger)', fontWeight: 900, fontSize: '0.85rem', letterSpacing: '1px', textTransform: 'uppercase', textShadow: '0 0 8px rgba(255,59,48,0.2)' }}>
-                Emerging Event Identified
+                {t.cc_event_identified}
               </div>
             </div>
           </div>
@@ -559,46 +590,46 @@ export default function CommandCenter() {
           {/* 3. AI LIVE FEEDS PANEL */}
           <div className="cc-card">
             <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              📡 Live Incoming Signals & Anomaly Feeds
+              📡 {t.cc_signals_title}
             </h3>
             <div className="cc-feeds-panel">
               
               {/* Traffic Feed */}
               <div className="cc-feed-card">
                 <div className="cc-feed-header">
-                  <span className="cc-feed-title">🚗 Traffic Feed</span>
+                  <span className="cc-feed-title">🚗 {t.cc_traffic_feed}</span>
                   <span className="cc-feed-indicator" />
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Average Speed:</span>
-                  <span className="cc-feed-val">{liveSpeed} km/h</span>
+                  <span className="cc-feed-label">{t.cc_avg_speed}:</span>
+                  <span className="cc-feed-val">{liveSpeed} {language === 'kn' ? 'ಕಿಮೀ/ಗಂ' : 'km/h'}</span>
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Congestion Growth:</span>
+                  <span className="cc-feed-label">{t.cc_growth_rate}:</span>
                   <span className="cc-feed-val" style={{ color: 'var(--danger)' }}>{feeds.traffic.growth_rate}</span>
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Incident Count:</span>
-                  <span className="cc-feed-val">{feeds.traffic.incident_count} detected</span>
+                  <span className="cc-feed-label">{t.cc_incident_count}:</span>
+                  <span className="cc-feed-val">{feeds.traffic.incident_count} {t.cc_detected}</span>
                 </div>
               </div>
 
               {/* GPS Feed */}
               <div className="cc-feed-card">
                 <div className="cc-feed-header">
-                  <span className="cc-feed-title">📍 GPS Feed</span>
+                  <span className="cc-feed-title">📍 {t.cc_gps_feed}</span>
                   <span className="cc-feed-indicator" />
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Vehicle Density:</span>
-                  <span className="cc-feed-val">High ({liveDensityNum} vehicles/km)</span>
+                  <span className="cc-feed-label">{t.cc_vehicle_density}:</span>
+                  <span className="cc-feed-val">{language === 'kn' ? 'ಹೆಚ್ಚು' : 'High'} ({liveDensityNum} {t.cc_vehicles_per_km})</span>
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Crowd Density:</span>
-                  <span className="cc-feed-val">{feeds.gps.crowd_density}</span>
+                  <span className="cc-feed-label">{t.cc_crowd_density}:</span>
+                  <span className="cc-feed-val">{language === 'kn' ? (feeds.gps.crowd_density === 'Normal' ? 'ಸಾಮಾನ್ಯ' : feeds.gps.crowd_density === 'High' ? 'ಹೆಚ್ಚು' : feeds.gps.crowd_density) : feeds.gps.crowd_density}</span>
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Movement Patterns:</span>
+                  <span className="cc-feed-label">{t.cc_movement_patterns}:</span>
                   <span className="cc-feed-val" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100px' }} title={feeds.gps.patterns}>
                     {feeds.gps.patterns}
                   </span>
@@ -608,19 +639,19 @@ export default function CommandCenter() {
               {/* Social Buzz Feed */}
               <div className="cc-feed-card">
                 <div className="cc-feed-header">
-                  <span className="cc-feed-title">💬 Social Buzz Feed</span>
+                  <span className="cc-feed-title">💬 {t.cc_social_feed}</span>
                   <span className="cc-feed-indicator" />
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Mention Growth:</span>
+                  <span className="cc-feed-label">{t.cc_mention_growth}:</span>
                   <span className="cc-feed-val" style={{ color: 'var(--danger)' }}>{feeds.social.growth_rate}</span>
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Buzz Score:</span>
+                  <span className="cc-feed-label">{t.cc_buzz_score}:</span>
                   <span className="cc-feed-val">{liveBuzz}/100</span>
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Trending Keywords:</span>
+                  <span className="cc-feed-label">{t.cc_trending_keywords}:</span>
                   <span className="cc-feed-val">{feeds.social.keywords.join(', ')}</span>
                 </div>
               </div>
@@ -628,21 +659,21 @@ export default function CommandCenter() {
               {/* Weather Feed */}
               <div className="cc-feed-card">
                 <div className="cc-feed-header">
-                  <span className="cc-feed-title">🌧️ Weather Feed</span>
+                  <span className="cc-feed-title">🌧️ {t.cc_weather_feed}</span>
                   <span className="cc-feed-indicator" />
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Rainfall Intensity:</span>
-                  <span className="cc-feed-val">{feeds.weather.rainfall}</span>
+                  <span className="cc-feed-label">{t.cc_rainfall}:</span>
+                  <span className="cc-feed-val">{language === 'kn' ? (feeds.weather.rainfall === 'HEAVY RAIN' ? 'ಭಾರೀ ಮಳೆ' : feeds.weather.rainfall === 'LIGHT RAIN' ? 'ಹಗುರ ಮಳೆ' : feeds.weather.rainfall === 'NONE' ? 'ಯಾವುದೂ ಇಲ್ಲ' : feeds.weather.rainfall) : feeds.weather.rainfall}</span>
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Visibility:</span>
-                  <span className="cc-feed-val">{feeds.weather.visibility}</span>
+                  <span className="cc-feed-label">{t.cc_visibility}:</span>
+                  <span className="cc-feed-val">{language === 'kn' ? (feeds.weather.visibility === 'POOR' ? 'ಕಡಿಮೆ' : feeds.weather.visibility === 'GOOD' ? 'ಉತ್ತಮ' : feeds.weather.visibility) : feeds.weather.visibility}</span>
                 </div>
                 <div className="cc-feed-row">
-                  <span className="cc-feed-label">Weather Severity:</span>
+                  <span className="cc-feed-label">{t.cc_weather_severity}:</span>
                   <span className="cc-feed-val" style={{ color: feeds.weather.severity === 'SEVERE' ? 'var(--danger)' : 'inherit' }}>
-                    {feeds.weather.severity}
+                    {language === 'kn' ? (feeds.weather.severity === 'SEVERE' ? 'ತೀವ್ರ' : feeds.weather.severity === 'NORMAL' ? 'ಸಾಮಾನ್ಯ' : feeds.weather.severity) : feeds.weather.severity}
                   </span>
                 </div>
               </div>
@@ -653,7 +684,7 @@ export default function CommandCenter() {
             {rawFeeds.length > 0 && (
               <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '14px' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  💬 Real-Time Local Incident Feeds (Google News)
+                  {t.cc_google_news_feeds}
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                   {rawFeeds.map((feed, i) => (
@@ -668,7 +699,7 @@ export default function CommandCenter() {
                       </div>
                       <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '3px', lineHeight: '1.3' }}>{feed.snippet}</div>
                       <a href={feed.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.62rem', color: 'var(--primary)', textDecoration: 'underline', display: 'inline-block', marginTop: '4px' }}>
-                        View Source &rarr;
+                        {t.cc_view_source} &rarr;
                       </a>
                     </div>
                   ))}
@@ -686,44 +717,44 @@ export default function CommandCenter() {
           <div className={`cc-card alert-active ${flashKey > 0 ? 'cc-flash' : ''}`} key={flashKey}>
             <div className="cc-alert-headline">
               <span>🚨</span>
-              <span>EMERGING EVENT DETECTED</span>
+              <span>{t.cc_event_detected_title}</span>
             </div>
             <p style={{ margin: '8px 0 16px', fontSize: '0.78rem', color: 'var(--text-dark)', lineHeight: 1.4 }}>
-              <strong>AI Detection Core:</strong> {evt.description}
+              <strong>{language === 'kn' ? 'AI ಪತ್ತೆ ಕೋರ್:' : 'AI Detection Core:'}</strong> {evt.description}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Confidence Score:</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{t.cc_confidence_score}:</span>
                 <span style={{ color: 'var(--danger)', fontWeight: 800 }}>{evt.confidence}%</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Detected Time:</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{t.cc_detected_time}:</span>
                 <span style={{ color: 'var(--text-dark)', fontWeight: 800 }}>{liveDetectedTime}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Predicted Impact Radius:</span>
-                <span style={{ color: 'var(--text-dark)', fontWeight: 800 }}>{evt.predicted_impact_radius} km</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{t.cc_predicted_radius}:</span>
+                <span style={{ color: 'var(--text-dark)', fontWeight: 800 }}>{evt.predicted_impact_radius} {t.cc_km}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Estimated Time Until Severe:</span>
-                <span style={{ color: 'var(--danger)', fontWeight: 800 }}>{evt.estimated_time_to_severe} minutes</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{t.cc_time_until_severe}:</span>
+                <span style={{ color: 'var(--danger)', fontWeight: 800 }}>{evt.estimated_time_to_severe} {t.cc_mins}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Status:</span>
-                <span style={{ color: 'var(--danger)', fontWeight: 900 }}>{evt.status}</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{t.cc_status}:</span>
+                <span style={{ color: 'var(--danger)', fontWeight: 900 }}>{language === 'kn' ? (evt.status === 'CRITICAL' ? 'ಅತ್ಯಂತ ಗಂಭೀರ' : evt.status === 'HIGH' ? 'ಹೆಚ್ಚು' : evt.status) : evt.status}</span>
               </div>
             </div>
 
             <div style={{ borderTop: '1px solid rgba(255,59,48,0.15)', marginTop: '14px', paddingTop: '12px' }}>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', fontWeight: 800 }}>
-                Detection Sources
+                {t.cc_detection_sources}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                <div className="cc-source-pill">✓ Traffic Speed Anomaly</div>
-                <div className="cc-source-pill">✓ GPS Density Surge</div>
-                <div className="cc-source-pill">✓ Social Media Activity Spike</div>
-                <div className="cc-source-pill">✓ Weather Impact</div>
+                <div className="cc-source-pill">✓ {language === 'kn' ? 'ಸಂಚಾರ ವೇಗದ ಅಸಂಗತತೆ' : 'Traffic Speed Anomaly'}</div>
+                <div className="cc-source-pill">✓ {language === 'kn' ? 'GPS ದಟ್ಟಣೆ ಹೆಚ್ಚಳ' : 'GPS Density Surge'}</div>
+                <div className="cc-source-pill">✓ {language === 'kn' ? 'ಸಾಮಾಜಿಕ ಮಾಧ್ಯಮ ಚಟುವಟಿಕೆ ಹೆಚ್ಚಳ' : 'Social Media Activity Spike'}</div>
+                <div className="cc-source-pill">✓ {language === 'kn' ? 'ಹವಾಮಾನ ಪ್ರಭಾವ' : 'Weather Impact'}</div>
               </div>
             </div>
           </div>
@@ -731,25 +762,25 @@ export default function CommandCenter() {
           {/* 2. AFFECTED CORRIDORS & KEY JUNCTIONS */}
           <div className="cc-card" style={{ borderLeft: '4px solid var(--danger)' }}>
             <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🚧 Affected Corridors & Blocked Zones
+              🚧 {t.cc_affected_corridors_title}
             </h3>
             <p style={{ margin: '4px 0 12px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Real-time monitoring of specific roads and junctions impacted by the emerging event.
+              {t.cc_affected_desc}
             </p>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
               {/* Roads Column */}
               <div style={{ background: 'var(--bg-primary)', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                 <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '8px', textTransform: 'uppercase', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.5px' }}>
-                  🛣️ Impacted Roads
+                  🛣️ {t.cc_impacted_roads}
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {fc.affected_roads && fc.affected_roads.map((road, i) => {
                     const name = (typeof road === 'object' && road !== null) ? road.name : road;
                     return (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dark)', padding: '4px 6px', background: 'rgba(255, 149, 0, 0.05)', borderRadius: '4px', borderLeft: '3px solid #ff9500' }}>
-                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={name}>{name}</span>
-                        <span style={{ fontSize: '0.55rem', fontWeight: 800, background: 'rgba(255, 149, 0, 0.15)', color: '#ea750e', padding: '1px 5px', borderRadius: '3px' }}>DELAY</span>
+                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={name}>{language === 'kn' ? (corridorTranslationsKn[name] || name) : name}</span>
+                        <span style={{ fontSize: '0.55rem', fontWeight: 800, background: 'rgba(255, 149, 0, 0.15)', color: '#ea750e', padding: '1px 5px', borderRadius: '3px' }}>{language === 'kn' ? 'ವಿಳಂಬ' : 'DELAY'}</span>
                       </div>
                     );
                   })}
@@ -759,15 +790,15 @@ export default function CommandCenter() {
               {/* Intersections Column */}
               <div style={{ background: 'var(--bg-primary)', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                 <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '8px', textTransform: 'uppercase', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.5px' }}>
-                  📍 Key Intersections
+                  📍 {t.cc_key_intersections}
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {fc.affected_intersections && fc.affected_intersections.map((node, i) => {
                     const name = (typeof node === 'object' && node !== null) ? node.name : node;
                     return (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dark)', padding: '4px 6px', background: 'rgba(255, 59, 48, 0.05)', borderRadius: '4px', borderLeft: '3px solid #ff3b30' }}>
-                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={name}>{name}</span>
-                        <span style={{ fontSize: '0.55rem', fontWeight: 800, background: 'rgba(255, 59, 48, 0.15)', color: '#ff3b30', padding: '1px 5px', borderRadius: '3px' }}>BLOCKED</span>
+                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={name}>{language === 'kn' ? (corridorTranslationsKn[name] || name) : name}</span>
+                        <span style={{ fontSize: '0.55rem', fontWeight: 800, background: 'rgba(255, 59, 48, 0.15)', color: '#ff3b30', padding: '1px 5px', borderRadius: '3px' }}>{language === 'kn' ? 'ನಿರ್ಬಂಧಿತ' : 'BLOCKED'}</span>
                       </div>
                     );
                   })}
@@ -779,7 +810,7 @@ export default function CommandCenter() {
           {/* 3. FUTURE TRAFFIC FORECAST */}
           <div className="cc-card">
             <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              🔮 FUTURE TRAFFIC FORECAST
+              🔮 {t.cc_future_forecast_title}
             </h3>
             
             <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -787,8 +818,8 @@ export default function CommandCenter() {
               {/* Next 15m */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Next 15 Minutes</span>
-                  <span className="cc-forecast-badge cc-badge-mod">{fc.next_15}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{t.cc_next_15m}</span>
+                  <span className="cc-forecast-badge cc-badge-mod">{language === 'kn' ? (fc.next_15 === 'MODERATE' ? 'ಮಧ್ಯಮ' : fc.next_15) : fc.next_15}</span>
                 </div>
                 <div className="cc-chart-bar-wrap">
                   <div className="cc-chart-bar-fill" style={{ width: '45%', backgroundColor: '#ff9500' }} />
@@ -798,8 +829,8 @@ export default function CommandCenter() {
               {/* Next 30m */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Next 30 Minutes</span>
-                  <span className="cc-forecast-badge cc-badge-high">{fc.next_30}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{t.cc_next_30m}</span>
+                  <span className="cc-forecast-badge cc-badge-high">{language === 'kn' ? (fc.next_30 === 'HEAVY' ? 'ಹೆಚ್ಚು' : fc.next_30) : fc.next_30}</span>
                 </div>
                 <div className="cc-chart-bar-wrap">
                   <div className="cc-chart-bar-fill" style={{ width: '75%', backgroundColor: '#ff3b30' }} />
@@ -809,8 +840,8 @@ export default function CommandCenter() {
               {/* Next 60m */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Next 60 Minutes</span>
-                  <span className="cc-forecast-badge cc-badge-crit">{fc.next_60}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{t.cc_next_60m}</span>
+                  <span className="cc-forecast-badge cc-badge-crit">{language === 'kn' ? (fc.next_60 === 'CRITICAL' ? 'ಅತ್ಯಂತ ಗಂಭೀರ' : fc.next_60) : fc.next_60}</span>
                 </div>
                 <div className="cc-chart-bar-wrap">
                   <div className="cc-chart-bar-fill" style={{ width: '95%', backgroundColor: '#ff2d55' }} />
@@ -821,16 +852,16 @@ export default function CommandCenter() {
 
             <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '20px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Expected Average Speed:</span>
-                <span style={{ color: 'var(--text-dark)', fontWeight: 700 }}>{fc.avg_speed_forecast[2]} km/h</span>
+                <span style={{ color: 'var(--text-muted)' }}>{t.cc_expected_speed}:</span>
+                <span style={{ color: 'var(--text-dark)', fontWeight: 700 }}>{fc.avg_speed_forecast[2]} {language === 'kn' ? 'ಕಿಮೀ/ಗಂ' : 'km/h'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Expected Queue Length:</span>
-                <span style={{ color: 'var(--text-dark)', fontWeight: 700 }}>{fc.queue_length_forecast[2]} km</span>
+                <span style={{ color: 'var(--text-muted)' }}>{t.cc_expected_queue}:</span>
+                <span style={{ color: 'var(--text-dark)', fontWeight: 700 }}>{fc.queue_length_forecast[2]} {t.cc_km}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Estimated Delay:</span>
-                <span style={{ color: 'var(--danger)', fontWeight: 700 }}>{fc.estimated_delay} minutes</span>
+                <span style={{ color: 'var(--text-muted)' }}>{t.cc_estimated_delay}:</span>
+                <span style={{ color: 'var(--danger)', fontWeight: 700 }}>{fc.estimated_delay} {t.cc_mins}</span>
               </div>
             </div>
           </div>
@@ -838,10 +869,10 @@ export default function CommandCenter() {
           {/* 4. AI ACTION RECOMMENDATIONS */}
           <div className="cc-card">
             <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              🛡️ Recommended Actions & Interventions
+              🛡️ {t.cc_recommended_actions_title}
             </h3>
             <p style={{ margin: '4px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Select recommendations below to simulate operational mitigation in real-time.
+              {t.cc_select_rec_desc}
             </p>
             
             <div className="cc-rec-list">
@@ -879,7 +910,7 @@ export default function CommandCenter() {
                       readOnly 
                       style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
                     />
-                    <span>{emoji} {act}</span>
+                    <span>{emoji} {translateRecommendation(act)}</span>
                   </div>
                 );
               })}
@@ -887,20 +918,20 @@ export default function CommandCenter() {
 
             <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '20px', paddingTop: '16px' }}>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
-                Estimated Impact Reduction
+                {t.cc_estimated_reduction}
               </div>
               <div className="cc-comparison-container">
                 <div className="cc-comparison-box cc-comp-without">
-                  <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase' }}>Without Intervention</div>
-                  <div className="cc-comp-val">{baseDelay} min</div>
-                  <div style={{ fontSize: '0.55rem', opacity: 0.8, marginTop: '2px' }}>average delay</div>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase' }}>{t.cc_without_intervention}</div>
+                  <div className="cc-comp-val">{baseDelay} {t.cc_min}</div>
+                  <div style={{ fontSize: '0.55rem', opacity: 0.8, marginTop: '2px' }}>{t.cc_average_delay}</div>
                 </div>
                 <div className="cc-comparison-box cc-comp-with">
-                  <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase' }}>With Intervention</div>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase' }}>{t.cc_with_intervention}</div>
                   <div className="cc-comp-val" style={{ color: appliedActions.length === 5 ? 'var(--success)' : 'var(--warning)' }}>
-                    {currentDelayWithIntervention} min
+                    {currentDelayWithIntervention} {t.cc_min}
                   </div>
-                  <div style={{ fontSize: '0.55rem', opacity: 0.8, marginTop: '2px' }}>estimated delay</div>
+                  <div style={{ fontSize: '0.55rem', opacity: 0.8, marginTop: '2px' }}>{t.cc_estimated_delay_lbl}</div>
                 </div>
               </div>
             </div>

@@ -1,9 +1,12 @@
 import React from 'react';
+import { translations } from '../translations';
 
 export default function Settings({ 
   personnel, 
-  setPersonnel
+  setPersonnel,
+  language
 }) {
+  const t = translations[language] || translations.en;
   const handleAddCommander = () => {
     const nameInput = document.getElementById('settings-personnel-name');
     const phoneInput = document.getElementById('settings-personnel-phone');
@@ -11,12 +14,12 @@ export default function Settings({
       const name = nameInput.value.trim();
       const phone = phoneInput.value.trim();
       if (!name || !phone) {
-        alert('Please fill in both name and phone number.');
+        alert(t.set_alert_fill);
         return;
       }
       const cleanPhone = phone.replace(/[^0-9]/g, '');
       if (cleanPhone.length < 10) {
-        alert('Please enter a valid phone number with at least 10 digits.');
+        alert(t.set_alert_valid);
         return;
       }
       setPersonnel(prev => [...prev, { name, phone }]);
@@ -26,11 +29,11 @@ export default function Settings({
   };
 
   const handleResetDefaults = () => {
-    if (window.confirm('Are you sure you want to reset personnel to default commanders?')) {
+    if (window.confirm(t.set_confirm_reset)) {
       setPersonnel([
-        { name: 'Inspector Shivanna (Mysore Road)', phone: '+919876543210' },
-        { name: 'ACP Gowda (Central Division)', phone: '+918765432109' },
-        { name: 'Inspector Ramachandra (West Division)', phone: '+919988776655' }
+        { name: language === 'kn' ? 'ಇನ್ಸ್‌ಪೆಕ್ಟರ್ ಶಿವಣ್ಣ (ಮೈಸೂರು ರಸ್ತೆ)' : 'Inspector Shivanna (Mysore Road)', phone: '+919876543210' },
+        { name: language === 'kn' ? 'ಎಸಿಪಿ ಗೌಡ (ಕೇಂದ್ರ ವಿಭಾಗ)' : 'ACP Gowda (Central Division)', phone: '+918765432109' },
+        { name: language === 'kn' ? 'ಇನ್ಸ್‌ಪೆಕ್ಟರ್ ರಾಮಚಂದ್ರ (ಪಶ್ಚಿಮ ವಿಭಾಗ)' : 'Inspector Ramachandra (West Division)', phone: '+919988776655' }
       ]);
     }
   };
@@ -49,7 +52,7 @@ export default function Settings({
               </svg>
             </div>
             <h3 style={{ fontSize: '1.15rem', color: 'var(--primary)', textTransform: 'uppercase', margin: 0, fontWeight: 800 }}>
-              Field Personnel Settings
+              {t.set_title}
             </h3>
           </div>
           <button 
@@ -58,18 +61,18 @@ export default function Settings({
             style={{ padding: '6px 12px', fontSize: '0.8rem', width: 'auto', margin: 0 }}
             onClick={handleResetDefaults}
           >
-            Reset Defaults
+            {t.set_reset_defaults}
           </button>
         </div>
         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px', fontWeight: 600 }}>
-          Configure WhatsApp numbers for field commanders to enable instant one-click dispatch briefings directly from model predictions.
+          {t.set_desc}
         </p>
 
         {/* List of Personnel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
           {personnel.length === 0 ? (
             <div style={{ padding: '16px', textAlign: 'center', background: 'var(--bg-primary)', border: '1.5px dashed var(--border-color)', borderRadius: '8px', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
-              No commanders registered in the system. Use the form below to register new personnel.
+              {t.set_no_commanders}
             </div>
           ) : (
             personnel.map((p, idx) => (
@@ -85,7 +88,7 @@ export default function Settings({
                   onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
                   onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                 >
-                  Remove
+                  {t.set_remove}
                 </button>
               </div>
             ))
@@ -94,11 +97,11 @@ export default function Settings({
 
         {/* Add New Form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
-          <span style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Add Commander</span>
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>{t.set_add_commander}</span>
           <div style={{ display: 'flex', gap: '8px' }}>
             <input 
               type="text" 
-              placeholder="Name (e.g. ACP Gowda)" 
+              placeholder={language === 'kn' ? 'ಹೆಸರು (ಉದಾ. ಎಸಿಪಿ ಗೌಡ)' : 'Name (e.g. ACP Gowda)'}
               id="settings-personnel-name"
               style={{ 
                 flex: 1, 
@@ -132,7 +135,7 @@ export default function Settings({
               style={{ padding: '10px 20px', fontSize: '0.88rem', width: 'auto', margin: 0 }}
               onClick={handleAddCommander}
             >
-              Add
+              {t.set_add_btn}
             </button>
           </div>
         </div>

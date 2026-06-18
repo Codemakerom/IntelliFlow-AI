@@ -2370,9 +2370,10 @@ start_periodic_cache_update()
 
 class VoiceOverviewRequest(BaseModel):
     text: str
+    target_language_code: Optional[str] = "en-IN"
 
 
-def text_to_speech_sarvam(text: str, api_key: str) -> Optional[str]:
+def text_to_speech_sarvam(text: str, api_key: str, target_language_code: str = "en-IN") -> Optional[str]:
     url = "https://api.sarvam.ai/text-to-speech"
     headers = {
         "api-subscription-key": api_key,
@@ -2380,8 +2381,8 @@ def text_to_speech_sarvam(text: str, api_key: str) -> Optional[str]:
     }
     data = {
         "text": text,
-        "target_language_code": "en-IN",
-        "speaker": "ritu",
+        "target_language_code": target_language_code,
+        "speaker": "ritu" if target_language_code == "en-IN" else "aditya",
         "model": "bulbul:v3",
         "pace": 1.05
     }
@@ -2412,7 +2413,8 @@ def voice_overview(req: VoiceOverviewRequest):
             detail="Sarvam AI API key is missing. Please set it as SARVAM_API_KEY in your backend .env file."
         )
 
-    audio_base64 = text_to_speech_sarvam(req.text, api_key)
+    lang_code = req.target_language_code or "en-IN"
+    audio_base64 = text_to_speech_sarvam(req.text, api_key, lang_code)
     if not audio_base64:
         raise HTTPException(
             status_code=502,

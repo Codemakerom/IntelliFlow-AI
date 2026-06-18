@@ -1,6 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { translations } from '../translations';
 
-export default function Dashboard() {
+const corridorTranslationsKn = {
+  'Mysore Road': 'ಮೈಸೂರು ರಸ್ತೆ',
+  'Bellary Road 1': 'ಬಳ್ಳಾರಿ ರಸ್ತೆ 1',
+  'Tumkur Road': 'ತುಮಕೂರು ರಸ್ತೆ',
+  'Bellary Road 2': 'ಬಳ್ಳಾರಿ ರಸ್ತೆ 2',
+  'Hosur Road': 'ಹೊಸೂರು ರಸ್ತೆ',
+  'ORR North 1': 'ಹೊರ ವರ್ತುಲ ರಸ್ತೆ ಉತ್ತರ 1',
+  'Old Madras Road': 'ಹಳೇ ಮದ್ರಾಸ್ ರಸ್ತೆ',
+  'Magadi Road': 'ಮಾಗಡಿ ರಸ್ತೆ',
+  'ORR East 1': 'ಹೊರ ವರ್ತುಲ ರಸ್ತೆ ಪೂರ್ವ 1',
+  'Non-corridor': 'ಕಾರಿಡಾರ್ ಅಲ್ಲದ ರಸ್ತೆ'
+};
+
+export default function Dashboard({ language, setLanguage }) {
   const [stats, setStats] = useState(null);
   const [mlStats, setMlStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,11 +42,19 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
+  const t = translations[language] || translations.en;
+
+  // Helper to safely translate cause keys dynamically
+  const translateCause = (cause) => {
+    const key = `cause_${cause.toLowerCase().trim()}`;
+    return t[key] || cause.replace(/_/g, ' ');
+  };
+
   if (loading) {
     return (
       <div className="empty-results">
         <div className="status-dot"></div>
-        <p>Loading analytical dashboard...</p>
+        <p>{t.loading_dashboard}</p>
       </div>
     );
   }
@@ -47,8 +69,8 @@ export default function Dashboard() {
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
         </span>
-        <p>Error loading dashboard: {error}</p>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Is the FastAPI server running on port 8000?</p>
+        <p>{t.error_loading_dashboard}: {error}</p>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t.fastapi_check}</p>
       </div>
     );
   }
@@ -60,35 +82,37 @@ export default function Dashboard() {
     <div>
       <div className="kpi-row">
         <div className="kpi-card">
-          <h3>Total Incidents Analysed</h3>
+          <h3>{t.total_incidents}</h3>
           <div className="kpi-value">{stats?.total_events.toLocaleString()}</div>
           <div className="kpi-trend positive" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>Fully Cleaned Dataset</span>
+            <span>{t.dataset_status}</span>
           </div>
         </div>
         
         <div className="kpi-card">
-          <h3>Road Closure Rate</h3>
+          <h3>{t.closure_rate}</h3>
           <div className="kpi-value">{stats?.closure_rate}%</div>
-          <div className="kpi-trend highlight">Imbalance: {stats?.closure_rate > 0 ? (100 / stats.closure_rate).toFixed(1) : 0}x Normal rate</div>
+          <div className="kpi-trend highlight">
+            {t.imbalance}: {stats?.closure_rate > 0 ? (100 / stats.closure_rate).toFixed(1) : 0}x {t.normal_rate}
+          </div>
         </div>
 
         <div className="kpi-card">
-          <h3>Avg Clear-Out Time</h3>
+          <h3>{t.avg_clear_time}</h3>
           <div className="kpi-value">
             {stats?.avg_resolution_min >= 60 
-              ? `${(stats.avg_resolution_min / 60).toFixed(1)} hrs` 
-              : `${stats?.avg_resolution_min} min`}
+              ? `${(stats.avg_resolution_min / 60).toFixed(1)} ${t.hrs}` 
+              : `${stats?.avg_resolution_min} ${t.mins}`}
           </div>
-          <div className="kpi-trend">Historical Resolution Average</div>
+          <div className="kpi-trend">{t.res_avg}</div>
         </div>
 
         {/* ML Model Confidence KPI */}
         <div className="kpi-card kpi-ml-card">
-          <h3>ML Model Confidence</h3>
+          <h3>{t.ml_confidence}</h3>
           <div className="kpi-value" style={{
             color: mlStats?.avg_accuracy_pct != null
               ? mlStats.avg_accuracy_pct >= 80 ? '#34c759' : mlStats.avg_accuracy_pct >= 60 ? '#ff9500' : '#ff3b30'
@@ -99,11 +123,11 @@ export default function Dashboard() {
           {mlStats?.avg_accuracy_pct != null ? (
             <div className="kpi-trend" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <span className="status-dot" style={{ background: '#34c759' }}></span>
-              <span>MAE ±{mlStats.mae_min} min · {mlStats.total_events_logged} events</span>
+              <span>{t.mae} ±{mlStats.mae_min} {t.mins} · {mlStats.total_events_logged} {t.events}</span>
             </div>
           ) : (
             <div className="kpi-trend" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-muted)' }}>
-              <span>Log events to activate</span>
+              <span>{t.log_to_activate}</span>
             </div>
           )}
         </div>
@@ -112,7 +136,7 @@ export default function Dashboard() {
       <div className="dashboard-grid">
         {/* Left Side: Top causes */}
         <div className="card">
-          <h3 className="card-title">Top Event Causes</h3>
+          <h3 className="card-title">{t.top_causes}</h3>
           <div className="bar-list">
             {stats?.top_causes?.slice(0, 7).map((item, index) => {
               const percentage = (item.count / maxCauseCount) * 100;
@@ -120,7 +144,7 @@ export default function Dashboard() {
                 <div className="bar-row" key={index}>
                   <div className="bar-info">
                     <span style={{ textTransform: 'capitalize' }}>
-                      {item.cause.replace('_', ' ')}
+                      {translateCause(item.cause)}
                     </span>
                     <span>{item.count.toLocaleString()}</span>
                   </div>
@@ -138,18 +162,20 @@ export default function Dashboard() {
 
         {/* Right Side: High risk corridors */}
         <div className="card">
-          <h3 className="card-title">Critical Corridors</h3>
+          <h3 className="card-title">{t.critical_corridors}</h3>
           <div className="simple-list">
             {stats?.high_risk_corridors?.map((item, index) => (
               <div className="list-item" key={index}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '0.95rem' }}>{item.corridor}</span>
+                  <span style={{ fontSize: '0.95rem' }}>
+                    {language === 'kn' ? (corridorTranslationsKn[item.corridor] || item.corridor) : item.corridor}
+                  </span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {item.total_events} events logged
+                    {item.total_events} {t.events_logged}
                   </span>
                 </div>
                 <span className="badge">
-                  {item.closure_rate}% closure
+                  {item.closure_rate}% {t.closure}
                 </span>
               </div>
             ))}
