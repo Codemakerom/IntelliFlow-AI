@@ -55,7 +55,7 @@ export default function CommandCenter({ language }) {
 
   const handleForceRefresh = () => {
     setRefreshing(true);
-    fetch('http://localhost:8000/api/command-center?force=true')
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/command-center?force=true`)
       .then((res) => {
         if (!res.ok) throw new Error('API failed');
         return res.json();
@@ -76,7 +76,7 @@ export default function CommandCenter({ language }) {
 
   // Fetch status from API
   const fetchStatus = () => {
-    fetch('http://localhost:8000/api/command-center')
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/command-center`)
       .then((res) => {
         if (!res.ok) throw new Error('API failed');
         return res.json();

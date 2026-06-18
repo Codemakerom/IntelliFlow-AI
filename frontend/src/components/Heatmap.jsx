@@ -59,11 +59,11 @@ export default function Heatmap({ language }) {
   useEffect(() => {
     // Fetch heatmap zones & top junctions in parallel
     Promise.all([
-      fetch('http://localhost:8000/api/heatmap').then((res) => {
+      fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/heatmap`).then((res) => {
         if (!res.ok) throw new Error('Failed to fetch heatmap data');
         return res.json();
       }),
-      fetch('http://localhost:8000/api/top-junctions').then((res) => {
+      fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/top-junctions`).then((res) => {
         if (!res.ok) throw new Error('Failed to fetch top junctions');
         return res.json();
       })

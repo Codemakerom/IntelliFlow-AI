@@ -103,7 +103,7 @@ export default function Planner({ onEventEnd, personnel, language }) {
 
   // Load options from FastAPI
   useEffect(() => {
-    fetch('http://localhost:8000/api/options')
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/options`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load form metadata.');
         return res.json();
@@ -207,7 +207,7 @@ export default function Planner({ onEventEnd, personnel, language }) {
       groq_api_key: localStorage.getItem('groq_api_key') || '',
     };
 
-    fetch('http://localhost:8000/api/predict', {
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/predict`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -262,7 +262,7 @@ export default function Planner({ onEventEnd, personnel, language }) {
       groq_api_key: localStorage.getItem('groq_api_key') || '',
     };
 
-    fetch('http://localhost:8000/api/simulate', {
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/simulate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -418,7 +418,7 @@ export default function Planner({ onEventEnd, personnel, language }) {
       target_language_code: language === 'kn' ? 'kn-IN' : 'en-IN'
     };
 
-    fetch('http://localhost:8000/api/voice-overview', {
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/voice-overview`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -527,7 +527,7 @@ ${juncsText}
       }
 
       try {
-        const response = await fetch('http://localhost:8000/api/dispatch-brief', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/dispatch-brief`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

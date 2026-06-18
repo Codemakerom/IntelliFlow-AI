@@ -62,7 +62,7 @@ export default function Analytics({ language }) {
   const fetchFiles = async () => {
     try {
       setLoadingFiles(true);
-      const res = await fetch('http://localhost:8000/api/analytics-files');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/analytics-files`);
       if (!res.ok) throw new Error("Failed to fetch files");
       const data = await res.json();
       setFileList(data);
@@ -77,7 +77,7 @@ export default function Analytics({ language }) {
     try {
       setLoadingHealth(true);
       setHealthError(null);
-      const res = await fetch('http://localhost:8000/api/analytics-health');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/analytics-health`);
       if (!res.ok) throw new Error("Failed to fetch pipeline health metrics");
       const data = await res.json();
       setHealthData(data);
@@ -114,7 +114,7 @@ export default function Analytics({ language }) {
       try {
         setLoadingPreview(true);
         setPreviewError(null);
-        const res = await fetch(`http://localhost:8000/api/analytics-preview/${selectedFile.filename}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/analytics-preview/${selectedFile.filename}`);
         if (!res.ok) throw new Error("Failed to fetch preview data");
         const data = await res.json();
         setPreviewData(data);
@@ -328,7 +328,7 @@ export default function Analytics({ language }) {
                         <span>{t.an_preview_tab}</span>
                       </button>
                       <a 
-                        href={`http://localhost:8000/api/analytics-download/${file.filename}`}
+                        href={`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/analytics-download/${file.filename}`}
                         className="btn-primary"
                         style={{
                           flex: 1,
@@ -818,7 +818,7 @@ export default function Analytics({ language }) {
               </div>
 
               <a 
-                href={`http://localhost:8000/api/analytics-download/${selectedFile.filename}`}
+                href={`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/analytics-download/${selectedFile.filename}`}
                 className="btn-primary"
                 style={{
                   textDecoration: 'none',

@@ -76,13 +76,13 @@ export default function LearningEngine({ predictionContext, language }) {
     setRetraining(true);
     setRetrainStatus(null);
     try {
-      const res = await fetch('http://localhost:8000/api/trigger-retrain', { method: 'POST' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/trigger-retrain`, { method: 'POST' });
       const data = await res.json();
       setRetrainStatus(data);
       if (data.success) {
         // Refresh stats and log after successful retrain
         loadStats();
-        fetch('http://localhost:8000/api/retrain-log')
+        fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/retrain-log`)
           .then(r => r.json()).then(d => setRetrainLog(d.runs || []));
       }
     } catch (err) {
@@ -93,7 +93,7 @@ export default function LearningEngine({ predictionContext, language }) {
 
   // Load retrain log on mount
   useEffect(() => {
-    fetch('http://localhost:8000/api/retrain-log')
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/retrain-log`)
       .then(r => r.json()).then(d => setRetrainLog(d.runs || []))
       .catch(() => {});
   }, []);
@@ -129,7 +129,7 @@ export default function LearningEngine({ predictionContext, language }) {
     if (!isMountedRef.current) return;
     setVoiceLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/parse-voice-brief', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/parse-voice-brief`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -244,7 +244,7 @@ export default function LearningEngine({ predictionContext, language }) {
 
   const loadStats = () => {
     setStatsLoading(true);
-    fetch('http://localhost:8000/api/model-stats')
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/model-stats`)
       .then(r => r.json()).then(d => { setStats(d); setStatsLoading(false); })
       .catch(() => setStatsLoading(false));
   };
@@ -273,7 +273,7 @@ export default function LearningEngine({ predictionContext, language }) {
           notes,
         ].filter(Boolean).join(' | '),
       };
-      const res = await fetch('http://localhost:8000/api/feedback', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/feedback`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });

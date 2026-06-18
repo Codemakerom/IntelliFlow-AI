@@ -21,7 +21,7 @@ export default function Dashboard({ language, setLanguage }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/dashboard')
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/dashboard`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch dashboard data');
         return res.json();
@@ -36,7 +36,7 @@ export default function Dashboard({ language, setLanguage }) {
         setLoading(false);
       });
 
-    fetch('http://localhost:8000/api/model-stats')
+    fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000"}`}/api/model-stats`)
       .then(r => r.json())
       .then(d => setMlStats(d))
       .catch(() => {});
