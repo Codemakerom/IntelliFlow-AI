@@ -13,6 +13,10 @@ from typing import Optional
 
 app = FastAPI(title="Gridlock Round 3 Full-Stack API")
 
+@app.get("/")
+def read_root():
+    return {"message": "Gridlock Backend API is Live!", "status": "running"}
+
 # Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
