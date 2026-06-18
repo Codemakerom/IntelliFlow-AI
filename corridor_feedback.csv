@@ -1,0 +1,24 @@
+corridor,total_events,avg_resolution,avg_impact_score,road_closure_pct,most_common_cause
+Unknown Corridor,20,5649.19,5.29,0.0,pot_holes
+CBD 1,26,4216.9,7.65,11.54,pot_holes
+CBD 2,104,3812.59,10.79,6.73,vehicle_breakdown
+Hennur Main Road,96,3198.76,12.56,6.25,vehicle_breakdown
+IRR(Thanisandra road),95,2983.78,8.37,6.32,pot_holes
+Bannerghata Road,209,2792.01,9.12,3.35,vehicle_breakdown
+West of Chord Road,174,2262.12,9.05,6.32,vehicle_breakdown
+Non-corridor,3124,2116.21,7.13,12.1,vehicle_breakdown
+Airport New South Road,67,1920.72,13.36,10.45,vehicle_breakdown
+Old Airport Road,76,1893.0,13.19,7.89,vehicle_breakdown
+ORR East 2,187,1876.88,15.33,1.6,construction
+ORR West 1,168,1822.28,9.56,2.98,vehicle_breakdown
+Hosur Road,298,1816.69,28.12,5.7,vehicle_breakdown
+ORR East 1,244,1782.52,26.61,7.38,vehicle_breakdown
+Varthur Road,77,1652.98,10.18,11.69,vehicle_breakdown
+Magadi Road,245,1593.78,26.51,4.08,vehicle_breakdown
+ORR North 2,235,1454.87,9.97,4.26,vehicle_breakdown
+ORR North 1,275,1411.85,30.47,8.0,vehicle_breakdown
+Bellary Road 2,379,1385.32,30.91,3.17,vehicle_breakdown
+Old Madras Road,263,1379.14,27.17,4.56,vehicle_breakdown
+Mysore Road,743,1296.34,32.02,11.04,vehicle_breakdown
+Bellary Road 1,610,1223.06,30.18,5.41,vehicle_breakdown
+Tumkur Road,458,615.28,28.65,2.62,vehicle_breakdown

@@ -1,0 +1,17 @@
+event_cause,avg_impact_score,avg_delay_min,avg_radius_km,total_events
+vip_movement,56.61,39.2,3.43,20
+public_event,47.53,32.46,2.78,84
+protest,38.48,24.0,1.92,15
+procession,38.19,24.5,2.04,72
+Fog / Low Visibility,27.94,16.0,4.0,2
+accident,27.03,24.87,1.49,365
+construction,25.09,19.37,1.94,480
+water_logging,18.66,15.22,1.01,458
+vehicle_breakdown,17.0,11.51,0.58,4896
+congestion,15.68,14.55,0.97,136
+road_conditions,14.32,9.52,0.95,170
+others,12.19,5.36,0.54,638
+tree_fall,11.78,8.5,0.43,284
+debris,9.19,9.15,0.46,13
+pot_holes,8.56,4.78,0.29,537
+test_demo,0.35,0.0,0.07,3
