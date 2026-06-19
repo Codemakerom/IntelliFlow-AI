@@ -1,71 +1,182 @@
 # 🚦 GridLock: Event-Driven Congestion Forecasting & Tactical Recommendation Engine
 
-GridLock is a state-of-the-art, event-driven congestion forecasting and tactical recommendation engine designed for city-wide traffic enforcement in Bangalore. It bridges machine learning predictions, geographical topological graphs, LLM-powered command sandboxes, and automated dispatch APIs into a unified, bilingual command interface.
+GridLock is a state-of-the-art, event-driven congestion forecasting and tactical recommendation engine designed for city-wide traffic enforcement in Bangalore. It bridges machine learning predictions, geographical topological graphs, LLM-powered command sandboxes, and automated dispatch APIs into a unified, bilingual command interface. 
 
 ---
 
-## 🌟 Core Features & Unique Selling Propositions (USPs)
+## 🌟 Problem Statement
 
-### 1. Cascading Impact Predictor (BFS Wave Propagation)
-Instead of looking at traffic incidents in isolation, GridLock models the road network as a directed adjacency graph of major Bangalore corridors. When an incident occurs, the engine runs a **Breadth-First Search (BFS)** traversal to model the physical spillover of traffic.
-* **Decay & Attenuation:** Impact decays exponentially per hop:
-  * *Standard decay:* $Score_{Depth+1} = Score_{Depth} \times 0.50$
-  * *Aggressive decay* (for Vip Movement, Protest, Procession): $Score_{Depth+1} = Score_{Depth} \times 0.60$ (congestion spreads further and decays slower).
-* **Peak Hour Amplification:** During morning peak (7:00–10:00) or evening peak (17:00–21:00), the initial propagation score is scaled by `1.15` to model rush-hour congestion density.
+Cities frequently experience severe congestion due to:
 
-### 2. Auto-Calibrating ML Feedback Loop
-When dispatchers log actual incident durations in the field, the backend updates a persistent correction registry using an **Exponentially Weighted Moving Average (EWMA)** bias-correction table:
-$$\Delta_t = ActualTime - PredictedTime$$
-$$EWMA_t = \alpha \times \Delta_t + (1 - \alpha) \times EWMA_{t-1}$$
-Every logged feedback instantly corrects subsequent regression predictions without requiring immediate full-model retraining.
+* Public gatherings and festivals
+* Sports events and concerts
+* Road closures and accidents
+* Weather-related disruptions
+* Unexpected traffic incidents
 
-### 3. Precision Barricading & Choke Point Optimizer
-GridLock uses historical bottleneck data to recommend the exact locations and footprints of barriers and officers to deploy, maximizing diversion efficiency:
-$$\text{Efficiency \%} = \text{Base Efficiency} \times (1 - \text{Junction Closure Rate \%}) \times \text{Corridor Multiplier}$$
-This prevents the need for guess-work, providing exact choke-point coordinates and recommended resource counts (officers & barricades).
-
-### 4. What-If Scenario LLM Simulator
-Commanders can run conversational hypotheticals (e.g., *"What if we deploy 4 more officers?"* or *"What if we do not close the road?"*) against the network, powered by Gemini/Groq APIs to forecast clearance rate adjustments.
-
-### 5. Automated Dispatch & Multi-modal Feedback
-* **Twilio WhatsApp Dispatcher:** Generates structured dispatch cards sent directly to ground officers' phones.
-* **Voice-Based Feedback Input Parser:** Transcribes and parses spoken radio briefs (via Groq Whisper/LLaMA or regex fallbacks) to log ground truth parameters.
-* **TTS Narration:** Verbalizes briefings for eyes-free operation.
-* **Bilingual UI:** Native support for English and Kannada (`kn`) translations across all dashboard interfaces.
+Traditional traffic systems react after congestion occurs. GridLock shifts traffic management from **reactive** to **predictive**, allowing authorities to intervene before roads become overwhelmed. 
 
 ---
 
-## 🧠 Machine Learning & Algorithmic Design
+## 🎯 Key Features
 
-GridLock runs two distinct serialized model pipelines:
-1. **Road Closure Model (`RandomForestClassifier`):** Predicts lane-blocking probabilities.
-2. **Resolution Time Model (`GradientBoostingRegressor`):** Forecasts clearance duration in minutes.
+### 🔮 Predict Before It Happens
 
-```mermaid
-graph TD
-    A[Raw Incident Payload] --> B[Feature Engineering Engine]
-    B --> C[Spatial-Temporal Transforms]
-    B --> D[Target Encoding Registry]
-    B --> E[Rolling Temporal Counters]
-    C & D & E --> F[Closure Classifier: RandomForest]
-    C & D & E --> G[Resolution Regressor: GradientBoosting]
-    F --> H[Road Closure Probability %]
-    G --> I[Resolution Duration Min]
-    I --> J[EWMA Calibration Delta Filter]
-    J --> K[Final Calibrated Prediction]
-```
+#### Event Planning & Simulation Engine
 
-### Key Mathematical Formulations
+* Predict traffic impact before events begin
+* Estimate congestion duration
+* Forecast road closure probability
+* Generate officer, vehicle, and barricade requirements
+* Visualize event impact on an interactive map
 
-* **Trigonometric Time Projection:** Projects cyclic time units onto a continuous unit circle:
-  $$\theta_{hour} = \frac{2\pi \times \text{Hour}}{24}$$
-  $$Hour_{sin} = \sin(\theta_{hour}), \quad Hour_{cos} = \cos(\theta_{hour})$$
-* **Logarithmic Normalization:** To stabilize training on heavy-tailed delay distributions, the regressor trains on log-transformed targets:
-  $$y_{transformed} = \ln(1 + y)$$
-  At inference, predictions are reconstructed using:
-  $$\hat{y}_{minutes} = e^{\hat{y}} - 1$$
-* **Spatial Coordinate Grid Binning:** Continuous coordinates are binned into $2.77\text{ km} \times 2.77\text{ km}$ spatial sectors (0.025-degree resolution):
-  $$\text{Lat}_{bin} = \lfloor \frac{\text{Latitude} - 12.8}{0.025} \rfloor, \quad \text{Lon}_{bin} = \lfloor \frac{\text{Longitude} - 77.4}{0.025} \rfloor$$
+---
+
+### 🌊 Cascading Impact Predictor
+
+Unlike traditional systems that only show current congestion, GridLock predicts where congestion will spread next.
+
+* BFS-based congestion propagation engine
+* Hotspot forecasting
+* Traffic spillover prediction
+* Network-wide impact analysis
+
+---
+
+### 🚧 Barricading & Choke Point Optimizer
+
+Optimize intervention strategies before roads reach critical capacity.
+
+* Critical junction identification
+* Smart diversion planning
+* Barricade placement recommendations
+* Officer deployment optimization
+
+---
+
+### 🤖 AI Tactical Simulator
+
+A conversational command assistant for traffic authorities.
+
+Examples:
+
+* *"What if the event runs 2 hours longer?"*
+* *"What if we deploy 10 more officers?"*
+* *"What if we keep this road open?"*
+
+Instantly simulate outcomes before taking action.
+
+---
+
+### 🌍 Multilingual Support
+
+Designed for diverse operational environments.
+
+Supported Languages:
+
+* English
+* Kannada
+
+---
+
+### 🎙️ Voice Briefing & WhatsApp Dispatch
+
+Deliver actionable intelligence directly to field officers.
+
+* One-click voice summaries
+* AI-generated operational briefings
+* WhatsApp-based dispatch alerts
+* Hands-free traffic management
+
+---
+
+### 🗺️ Interactive Event Map
+
+Live operational visualization of:
+
+* Events
+* Diversions
+* Barricades
+* Congestion zones
+* High-risk junctions
+
+---
+
+### 📊 Traffic Intelligence Dashboard
+
+Mission Control for city-wide traffic operations.
+
+Monitor:
+
+* Active incidents
+* Predicted delays
+* Congestion severity
+* Resource utilization
+* Operational alerts
+
+---
+
+## 🏗️ System Architecture
+
+GridLock integrates multiple data sources:
+
+* Historical Traffic Data
+* Weather Data
+* Event Schedules
+* Real-Time Incident Reports
+* Road Network Data
+
+These sources feed into predictive ML models and simulation engines to generate actionable traffic intelligence.
+
+---
+
+## 🚀 Technology Stack
+
+### Frontend
+
+* React.js
+* Google Maps API
+* Tailwind CSS
+
+### Backend
+
+* FastAPI
+* Python
+
+### Machine Learning
+
+* Scikit-Learn
+* XGBoost
+* Graph-Based Congestion Modeling
+* BFS Propagation Engine
+
+### Deployment
+
+* Google Cloud Platform
+
+---
+
+## 💡 How GridLock is Different
+
+| Traditional Systems      | GridLock                             |
+| ------------------------ | ------------------------------------ |
+| Detect congestion        | Predict congestion                   |
+| Reactive response        | Proactive planning                   |
+| Static diversions        | AI-generated diversion strategies    |
+| Manual resource planning | Automated deployment recommendations |
+| Current traffic view     | Future traffic forecasting           |
+
+---
+
+## 🎯 Impact
+
+GridLock helps authorities:
+
+* Reduce congestion duration
+* Improve emergency response times
+* Optimize resource allocation
+* Minimize economic losses caused by traffic delays
+* Enhance commuter experience
 
 ---
 
