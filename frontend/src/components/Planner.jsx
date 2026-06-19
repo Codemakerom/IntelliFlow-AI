@@ -65,6 +65,10 @@ export default function Planner({ onEventEnd, personnel, language }) {
   const [audioObj, setAudioObj] = useState(null);
   const [voiceHovered, setVoiceHovered] = useState(false);
 
+  // Cascading Impact Predictor state
+  const [cascadeData, setCascadeData] = useState(null);
+  const [cascadeLoading, setCascadeLoading] = useState(false);
+
   // Stop audio on unmount or when results change
   useEffect(() => {
     return () => {
@@ -167,6 +171,7 @@ export default function Planner({ onEventEnd, personnel, language }) {
     e.preventDefault();
     setSubmitting(true);
     setResults(null);
+    setCascadeData(null);
     setSimulationChat([
       {
         sender: 'bot',
@@ -219,6 +224,22 @@ export default function Planner({ onEventEnd, personnel, language }) {
       .then((data) => {
         setResults(data);
         setSubmitting(false);
+        // Auto-trigger cascading impact predictor
+        setCascadeLoading(true);
+        const cascadePayload = {
+          corridor: data.primary_corridor || form.corridor,
+          event_cause: form.event_cause,
+          impact_score: data.event_impact_score || 50,
+          hour: hour,
+        };
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/cascade`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cascadePayload),
+        })
+          .then((r) => r.json())
+          .then((cd) => { setCascadeData(cd); setCascadeLoading(false); })
+          .catch(() => setCascadeLoading(false));
       })
       .catch((err) => {
         console.error(err);
@@ -2150,6 +2171,185 @@ ${juncsText}
         </div>
       )}
 
+      {/* ── CASCADING IMPACT PREDICTOR PANEL ── */}
+      {(cascadeLoading || cascadeData) && (
+        <div className="card" style={{ marginTop: '24px', borderLeft: '4px solid #8b5cf6', background: 'linear-gradient(135deg, rgba(139,92,246,0.04) 0%, rgba(59,130,246,0.04) 100%)' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1.5px solid rgba(139,92,246,0.15)', paddingBottom: '14px', marginBottom: '20px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="6"/>
+                <circle cx="12" cy="12" r="2"/>
+              </svg>
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#6d28d9' }}>🌊 Cascading Impact Propagation</h3>
+              <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Domino-effect simulation — how this event radiates congestion across adjacent corridors</p>
+            </div>
+            {cascadeLoading && (
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#8b5cf6', fontWeight: 700 }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#8b5cf6', animation: 'pulse-dot 1s infinite' }} />
+                Simulating propagation...
+              </div>
+            )}
+          </div>
+
+          {cascadeLoading && (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
+              Running BFS wave simulation across corridor adjacency graph...
+            </div>
+          )}
+
+          {cascadeData && cascadeData.success && (
+            <div>
+              {/* Summary KPI bar */}
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                {[
+                  { label: 'Corridors Affected', value: cascadeData.summary.total_corridors_affected, icon: '🛣️', color: '#8b5cf6' },
+                  { label: 'Total Network Delay', value: `+${cascadeData.summary.total_extra_delay_min} min`, icon: '⏱️', color: '#ef4444' },
+                  { label: 'Spread Radius', value: `~${cascadeData.summary.max_km_radius} km`, icon: '📡', color: '#f97316' },
+                  { label: 'Propagation Type', value: cascadeData.summary.propagation_type, icon: '⚡', color: cascadeData.summary.propagation_type === 'High-Propagation' ? '#ef4444' : '#10b981' },
+                ].map((kpi, i) => (
+                  <div key={i} style={{ flex: '1', minWidth: '130px', background: 'var(--bg-primary)', borderRadius: '12px', padding: '12px 14px', border: `1px solid ${kpi.color}22` }}>
+                    <div style={{ fontSize: '1.1rem', marginBottom: '4px' }}>{kpi.icon}</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{kpi.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Concentric Ring Diagram */}
+              <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '24px' }}>
+                <div style={{ position: 'relative', width: '220px', height: '220px', flexShrink: 0, margin: '0 auto' }}>
+                  <style>{`
+                    @keyframes cascade-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.08);opacity:0.85} }
+                    @keyframes cascade-ring1 { 0%,100%{opacity:0.7} 50%{opacity:1} }
+                    @keyframes cascade-ring2 { 0%,100%{opacity:0.5} 50%{opacity:0.85} }
+                    @keyframes cascade-ring3 { 0%,100%{opacity:0.3} 50%{opacity:0.6} }
+                    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+                  `}</style>
+                  {/* Ring 3 — outermost */}
+                  <div style={{ position:'absolute', inset:0, borderRadius:'50%', border:'2px dashed rgba(59,130,246,0.4)', animation:'cascade-ring3 2.5s ease-in-out infinite 0.6s' }} />
+                  {/* Ring 2 */}
+                  <div style={{ position:'absolute', inset:'28px', borderRadius:'50%', border:'2px dashed rgba(251,146,60,0.5)', animation:'cascade-ring2 2.5s ease-in-out infinite 0.3s' }} />
+                  {/* Ring 1 */}
+                  <div style={{ position:'absolute', inset:'56px', borderRadius:'50%', border:'2.5px solid rgba(239,68,68,0.55)', animation:'cascade-ring1 2.5s ease-in-out infinite' }} />
+                  {/* Epicentre */}
+                  <div style={{ position:'absolute', inset:'84px', borderRadius:'50%', background:'linear-gradient(135deg,#ef4444,#dc2626)', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', animation:'cascade-pulse 2s ease-in-out infinite', boxShadow:'0 0 20px rgba(239,68,68,0.4)' }}>
+                    <div style={{ fontSize:'0.55rem', color:'white', fontWeight:800, textTransform:'uppercase', letterSpacing:'0.03em', textAlign:'center', lineHeight:1.2 }}>D0</div>
+                    <div style={{ fontSize:'0.6rem', color:'rgba(255,255,255,0.85)', fontWeight:700, textAlign:'center' }}>Epi</div>
+                  </div>
+                  {/* Ring labels */}
+                  {[1,2,3].map(d => {
+                    const colors = ['#ef4444','#f97316','#3b82f6'];
+                    const sizes = [56,28,0];
+                    const corridorCount = (cascadeData.rings[String(d)] || []).length;
+                    if (corridorCount === 0) return null;
+                    return (
+                      <div key={d} style={{ position:'absolute', top: `${sizes[d-1] - 6}px`, right: `${sizes[d-1] - 6}px`, background: colors[d-1], borderRadius:'50%', width:'22px', height:'22px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <span style={{ fontSize:'0.6rem', color:'white', fontWeight:800 }}>D{d}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Ring legend */}
+                <div style={{ flex: 1, minWidth: '180px' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: '10px' }}>Propagation Rings</div>
+                  {/* Depth 0 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', padding: '8px 10px', borderRadius: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#dc2626' }}>Depth 0 — Epicentre</div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>{cascadeData.primary_corridor} · Score {cascadeData.epicentre_score}</div>
+                    </div>
+                  </div>
+                  {[1,2,3].map(d => {
+                    const corridors = cascadeData.rings[String(d)] || [];
+                    if (corridors.length === 0) return null;
+                    const ringColors = { 1: { bg:'rgba(239,68,68,0.06)', border:'rgba(239,68,68,0.2)', dot:'#f97316', label:'#c2410c' }, 2: { bg:'rgba(251,146,60,0.06)', border:'rgba(251,146,60,0.2)', dot:'#f97316', label:'#c2410c' }, 3: { bg:'rgba(59,130,246,0.06)', border:'rgba(59,130,246,0.15)', dot:'#3b82f6', label:'#1d4ed8' } };
+                    const rc = ringColors[d];
+                    const kmLabel = CASCADE_DEPTH_KM_LABEL[d];
+                    return (
+                      <div key={d} style={{ display:'flex', alignItems:'flex-start', gap:'8px', marginBottom:'8px', padding:'8px 10px', borderRadius:'8px', background: rc.bg, border: `1px solid ${rc.border}` }}>
+                        <div style={{ width:'10px', height:'10px', borderRadius:'50%', background: rc.dot, flexShrink:0, marginTop:'3px' }} />
+                        <div>
+                          <div style={{ fontSize:'0.78rem', fontWeight:800, color: rc.label }}>Depth {d} — ~{[4,9,15][d-1]} km out</div>
+                          <div style={{ fontSize:'0.68rem', color:'var(--text-muted)', fontWeight:600 }}>{corridors.join(' · ')}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Affected Corridors Table */}
+              {cascadeData.affected_corridors.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: '10px' }}>Network-Wide Impact Table</div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid rgba(139,92,246,0.15)' }}>
+                          {['Corridor', 'Depth', 'Impact Score', 'Extra Delay', 'Congestion', 'Action'].map(h => (
+                            <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontSize: '0.67rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cascadeData.affected_corridors.map((row, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', transition: 'background 0.15s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.04)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <td style={{ padding: '9px 10px', fontWeight: 700, color: 'var(--text-dark)' }}>{row.corridor}</td>
+                            <td style={{ padding: '9px 10px' }}>
+                              <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:'24px', height:'24px', borderRadius:'50%', background: ['','rgba(239,68,68,0.12)','rgba(251,146,60,0.12)','rgba(59,130,246,0.12)'][row.depth] || 'rgba(0,0,0,0.06)', fontSize:'0.7rem', fontWeight:800, color: ['','#dc2626','#c2410c','#1d4ed8'][row.depth] || 'var(--text-muted)' }}>D{row.depth}</span>
+                            </td>
+                            <td style={{ padding: '9px 10px' }}>
+                              <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+                                <div style={{ height:'6px', width:`${Math.min(100,row.impact_score)}%`, maxWidth:'80px', borderRadius:'3px', background: row.impact_score >= 55 ? 'linear-gradient(90deg,#ef4444,#dc2626)' : row.impact_score >= 28 ? 'linear-gradient(90deg,#f97316,#ea580c)' : 'linear-gradient(90deg,#eab308,#ca8a04)' }} />
+                                <span style={{ fontWeight:800, color: row.impact_score >= 55 ? '#dc2626' : row.impact_score >= 28 ? '#c2410c' : '#92400e' }}>{row.impact_score}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '9px 10px', fontWeight: 700, color: 'var(--text-dark)' }}>+{row.extra_delay_min} min</td>
+                            <td style={{ padding: '9px 10px' }}>
+                              <span style={{ fontSize:'0.7rem', fontWeight:700, color: row.congestion_label === 'Severe' ? '#dc2626' : row.congestion_label === 'High' ? '#c2410c' : row.congestion_label === 'Moderate' ? '#92400e' : '#15803d' }}>{row.congestion_label}</span>
+                            </td>
+                            <td style={{ padding: '9px 10px' }}>
+                              <span style={{ display:'inline-block', padding:'3px 9px', borderRadius:'20px', fontSize:'0.67rem', fontWeight:800, letterSpacing:'0.04em', background: row.action === 'DEPLOY' ? 'rgba(239,68,68,0.12)' : row.action === 'DIVERT' ? 'rgba(249,115,22,0.12)' : 'rgba(234,179,8,0.12)', color: row.action_color }}>
+                                {row.action}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Footer summary */}
+                  <div style={{ marginTop: '14px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#6d28d9' }}>
+                      This incident on <strong>{cascadeData.primary_corridor}</strong> is projected to cascade across <strong>{cascadeData.summary.total_corridors_affected} corridors</strong> within a <strong>~{cascadeData.summary.max_km_radius} km radius</strong>, adding an estimated <strong>+{cascadeData.summary.total_extra_delay_min} minutes</strong> of cumulative network delay.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {cascadeData.affected_corridors.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '24px', color: '#15803d', fontWeight: 700, fontSize: '0.85rem' }}>
+                  ✅ Contained Impact — No significant cascade propagation detected for this event.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
+
+const CASCADE_DEPTH_KM_LABEL = { 1: '~4 km', 2: '~9 km', 3: '~15 km' };

@@ -1,0 +1,1026 @@
+[
+  {
+    "id": "SCN-20260619-C5675E",
+    "name": "event1",
+    "created_at": "2026-06-19T16:12:19.138286",
+    "events": [
+      {
+        "name": "Event 1",
+        "corridor": "Hosur Road",
+        "event_cause": "public_event",
+        "impact_score": 70.0,
+        "start_hour": 19,
+        "duration": 3,
+        "hour": null
+      },
+      {
+        "name": "Event 2",
+        "corridor": "Old Madras Road",
+        "event_cause": "procession",
+        "impact_score": 60.0,
+        "start_hour": 18,
+        "duration": 2,
+        "hour": null
+      }
+    ],
+    "collision_result": {
+      "success": true,
+      "collision_zones": [
+        {
+          "corridor": "ORR East 1",
+          "collision_score": 100,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 48.3,
+            "Event 2": 41.4
+          },
+          "time_to_collision_min": 15,
+          "extra_officers_needed": 12,
+          "extra_barricades_needed": 6,
+          "depth_from_epicentres": 1,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Banaswadi Police Station",
+              "distance_km": 1.8,
+              "officers_deployed": 12,
+              "barricades_deployed": 6,
+              "remaining_officers": 18,
+              "remaining_barricades": 49
+            }
+          ]
+        },
+        {
+          "corridor": "Hosur Road",
+          "collision_score": 100,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 70,
+            "Event 2": 24.8
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 12,
+          "extra_barricades_needed": 6,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Madiwala Police Station",
+              "distance_km": 0.2,
+              "officers_deployed": 12,
+              "barricades_deployed": 6,
+              "remaining_officers": 33,
+              "remaining_barricades": 74
+            }
+          ]
+        },
+        {
+          "corridor": "Old Madras Road",
+          "collision_score": 100,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 48.3,
+            "Event 2": 60
+          },
+          "time_to_collision_min": 15,
+          "extra_officers_needed": 12,
+          "extra_barricades_needed": 6,
+          "depth_from_epicentres": 1,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Banaswadi Police Station",
+              "distance_km": 1.4,
+              "officers_deployed": 12,
+              "barricades_deployed": 6,
+              "remaining_officers": 6,
+              "remaining_barricades": 43
+            }
+          ]
+        },
+        {
+          "corridor": "Mysore Road",
+          "collision_score": 85.5,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 48.3,
+            "Event 2": 24.8
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 10,
+          "extra_barricades_needed": 5,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Kengeri Police Station",
+              "distance_km": 4.9,
+              "officers_deployed": 10,
+              "barricades_deployed": 5,
+              "remaining_officers": 20,
+              "remaining_barricades": 45
+            }
+          ]
+        },
+        {
+          "corridor": "ORR North 1",
+          "collision_score": 84.9,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 29,
+            "Event 2": 41.4
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 10,
+          "extra_barricades_needed": 5,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Peenya Police Station",
+              "distance_km": 3.6,
+              "officers_deployed": 10,
+              "barricades_deployed": 5,
+              "remaining_officers": 35,
+              "remaining_barricades": 75
+            }
+          ]
+        },
+        {
+          "corridor": "Bellary Road 1",
+          "collision_score": 84.9,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 29,
+            "Event 2": 41.4
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 10,
+          "extra_barricades_needed": 5,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Yelahanka Police Station",
+              "distance_km": 3.6,
+              "officers_deployed": 10,
+              "barricades_deployed": 5,
+              "remaining_officers": 19,
+              "remaining_barricades": 52
+            }
+          ]
+        },
+        {
+          "corridor": "Magadi Road",
+          "collision_score": 84.9,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 29,
+            "Event 2": 41.4
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 10,
+          "extra_barricades_needed": 5,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Kengeri Police Station",
+              "distance_km": 6.6,
+              "officers_deployed": 10,
+              "barricades_deployed": 5,
+              "remaining_officers": 10,
+              "remaining_barricades": 40
+            }
+          ]
+        },
+        {
+          "corridor": "Tumkur Road",
+          "collision_score": 66.2,
+          "severity": "HIGH",
+          "action": "STAGE & READY",
+          "action_color": "#f97316",
+          "severity_bg": "rgba(249,115,22,0.08)",
+          "severity_border": "rgba(249,115,22,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 29,
+            "Event 2": 24.8
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 8,
+          "extra_barricades_needed": 4,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Peenya Police Station",
+              "distance_km": 2.2,
+              "officers_deployed": 8,
+              "barricades_deployed": 4,
+              "remaining_officers": 27,
+              "remaining_barricades": 71
+            }
+          ]
+        },
+        {
+          "corridor": "Bellary Road 2",
+          "collision_score": 50.9,
+          "severity": "HIGH",
+          "action": "STAGE & READY",
+          "action_color": "#f97316",
+          "severity_bg": "rgba(249,115,22,0.08)",
+          "severity_border": "rgba(249,115,22,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 17.4,
+            "Event 2": 24.8
+          },
+          "time_to_collision_min": 45,
+          "extra_officers_needed": 6,
+          "extra_barricades_needed": 3,
+          "depth_from_epicentres": 3,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Yelahanka Police Station",
+              "distance_km": 2.2,
+              "officers_deployed": 6,
+              "barricades_deployed": 3,
+              "remaining_officers": 29,
+              "remaining_barricades": 57
+            }
+          ]
+        }
+      ],
+      "solo_impact_zones": [],
+      "event_summaries": [
+        {
+          "name": "Event 1",
+          "corridor": "Hosur Road",
+          "event_cause": "public_event",
+          "impact_score": 70,
+          "start_hour": 19,
+          "duration": 3,
+          "corridors_affected": 9
+        },
+        {
+          "name": "Event 2",
+          "corridor": "Old Madras Road",
+          "event_cause": "procession",
+          "impact_score": 60,
+          "start_hour": 18,
+          "duration": 2,
+          "corridors_affected": 9
+        }
+      ],
+      "precinct_inventory_status": [
+        {
+          "name": "Madiwala Police Station",
+          "initial_officers": 45,
+          "available_officers": 33,
+          "initial_barricades": 80,
+          "available_barricades": 74,
+          "lat": 12.9226,
+          "lon": 77.6219
+        },
+        {
+          "name": "HSR Layout Police Station",
+          "initial_officers": 35,
+          "available_officers": 35,
+          "initial_barricades": 60,
+          "available_barricades": 60,
+          "lat": 12.9116,
+          "lon": 77.6388
+        },
+        {
+          "name": "Hebbala Police Station",
+          "initial_officers": 40,
+          "available_officers": 40,
+          "initial_barricades": 70,
+          "available_barricades": 70,
+          "lat": 13.0359,
+          "lon": 77.597
+        },
+        {
+          "name": "Peenya Police Station",
+          "initial_officers": 45,
+          "available_officers": 27,
+          "initial_barricades": 80,
+          "available_barricades": 71,
+          "lat": 13.0329,
+          "lon": 77.5273
+        },
+        {
+          "name": "Whitefield Police Station",
+          "initial_officers": 50,
+          "available_officers": 50,
+          "initial_barricades": 90,
+          "available_barricades": 90,
+          "lat": 12.9698,
+          "lon": 77.75
+        },
+        {
+          "name": "HAL Old Airport Police Station",
+          "initial_officers": 35,
+          "available_officers": 35,
+          "initial_barricades": 65,
+          "available_barricades": 65,
+          "lat": 12.9598,
+          "lon": 77.6881
+        },
+        {
+          "name": "Kengeri Police Station",
+          "initial_officers": 30,
+          "available_officers": 10,
+          "initial_barricades": 50,
+          "available_barricades": 40,
+          "lat": 12.9176,
+          "lon": 77.4838
+        },
+        {
+          "name": "Cubbon Park Police Station",
+          "initial_officers": 55,
+          "available_officers": 55,
+          "initial_barricades": 100,
+          "available_barricades": 100,
+          "lat": 12.9738,
+          "lon": 77.596
+        },
+        {
+          "name": "Sadashivanagar Police Station",
+          "initial_officers": 30,
+          "available_officers": 30,
+          "initial_barricades": 50,
+          "available_barricades": 50,
+          "lat": 13.0068,
+          "lon": 77.58
+        },
+        {
+          "name": "Yelahanka Police Station",
+          "initial_officers": 35,
+          "available_officers": 19,
+          "initial_barricades": 60,
+          "available_barricades": 52,
+          "lat": 13.1008,
+          "lon": 77.5963
+        },
+        {
+          "name": "Banaswadi Police Station",
+          "initial_officers": 30,
+          "available_officers": 6,
+          "initial_barricades": 55,
+          "available_barricades": 43,
+          "lat": 13.0104,
+          "lon": 77.6482
+        },
+        {
+          "name": "Halasur Police Station",
+          "initial_officers": 40,
+          "available_officers": 40,
+          "initial_barricades": 70,
+          "available_barricades": 70,
+          "lat": 12.9782,
+          "lon": 77.6242
+        },
+        {
+          "name": "Mahadevapura Police Station",
+          "initial_officers": 45,
+          "available_officers": 45,
+          "initial_barricades": 80,
+          "available_barricades": 80,
+          "lat": 12.9936,
+          "lon": 77.6932
+        },
+        {
+          "name": "Yeshwanthpura Police Station",
+          "initial_officers": 40,
+          "available_officers": 40,
+          "initial_barricades": 70,
+          "available_barricades": 70,
+          "lat": 13.0235,
+          "lon": 77.5589
+        }
+      ],
+      "summary": {
+        "total_events_analysed": 2,
+        "collision_zone_count": 9,
+        "total_extra_officers": 90,
+        "total_extra_barricades": 45,
+        "most_critical_zone": "ORR East 1",
+        "has_critical_collision": true,
+        "alert_level": "\ud83d\udd34 CRITICAL COLLISION DETECTED"
+      }
+    },
+    "summary": {
+      "total_events_analysed": 2,
+      "collision_zone_count": 9,
+      "total_extra_officers": 90,
+      "total_extra_barricades": 45,
+      "most_critical_zone": "ORR East 1",
+      "has_critical_collision": true,
+      "alert_level": "\ud83d\udd34 CRITICAL COLLISION DETECTED"
+    }
+  },
+  {
+    "id": "SCN-20260619-62DF69",
+    "name": "event1",
+    "created_at": "2026-06-19T16:12:17.856059",
+    "events": [
+      {
+        "name": "Event 1",
+        "corridor": "Hosur Road",
+        "event_cause": "public_event",
+        "impact_score": 70.0,
+        "start_hour": 19,
+        "duration": 3,
+        "hour": null
+      },
+      {
+        "name": "Event 2",
+        "corridor": "Old Madras Road",
+        "event_cause": "procession",
+        "impact_score": 60.0,
+        "start_hour": 18,
+        "duration": 2,
+        "hour": null
+      }
+    ],
+    "collision_result": {
+      "success": true,
+      "collision_zones": [
+        {
+          "corridor": "ORR East 1",
+          "collision_score": 100,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 48.3,
+            "Event 2": 41.4
+          },
+          "time_to_collision_min": 15,
+          "extra_officers_needed": 12,
+          "extra_barricades_needed": 6,
+          "depth_from_epicentres": 1,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Banaswadi Police Station",
+              "distance_km": 1.8,
+              "officers_deployed": 12,
+              "barricades_deployed": 6,
+              "remaining_officers": 18,
+              "remaining_barricades": 49
+            }
+          ]
+        },
+        {
+          "corridor": "Hosur Road",
+          "collision_score": 100,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 70,
+            "Event 2": 24.8
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 12,
+          "extra_barricades_needed": 6,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Madiwala Police Station",
+              "distance_km": 0.2,
+              "officers_deployed": 12,
+              "barricades_deployed": 6,
+              "remaining_officers": 33,
+              "remaining_barricades": 74
+            }
+          ]
+        },
+        {
+          "corridor": "Old Madras Road",
+          "collision_score": 100,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 48.3,
+            "Event 2": 60
+          },
+          "time_to_collision_min": 15,
+          "extra_officers_needed": 12,
+          "extra_barricades_needed": 6,
+          "depth_from_epicentres": 1,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Banaswadi Police Station",
+              "distance_km": 1.4,
+              "officers_deployed": 12,
+              "barricades_deployed": 6,
+              "remaining_officers": 6,
+              "remaining_barricades": 43
+            }
+          ]
+        },
+        {
+          "corridor": "Mysore Road",
+          "collision_score": 85.5,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 48.3,
+            "Event 2": 24.8
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 10,
+          "extra_barricades_needed": 5,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Kengeri Police Station",
+              "distance_km": 4.9,
+              "officers_deployed": 10,
+              "barricades_deployed": 5,
+              "remaining_officers": 20,
+              "remaining_barricades": 45
+            }
+          ]
+        },
+        {
+          "corridor": "ORR North 1",
+          "collision_score": 84.9,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 29,
+            "Event 2": 41.4
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 10,
+          "extra_barricades_needed": 5,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Peenya Police Station",
+              "distance_km": 3.6,
+              "officers_deployed": 10,
+              "barricades_deployed": 5,
+              "remaining_officers": 35,
+              "remaining_barricades": 75
+            }
+          ]
+        },
+        {
+          "corridor": "Bellary Road 1",
+          "collision_score": 84.9,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 29,
+            "Event 2": 41.4
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 10,
+          "extra_barricades_needed": 5,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Yelahanka Police Station",
+              "distance_km": 3.6,
+              "officers_deployed": 10,
+              "barricades_deployed": 5,
+              "remaining_officers": 19,
+              "remaining_barricades": 52
+            }
+          ]
+        },
+        {
+          "corridor": "Magadi Road",
+          "collision_score": 84.9,
+          "severity": "CRITICAL",
+          "action": "PRE-DEPLOY NOW",
+          "action_color": "#ef4444",
+          "severity_bg": "rgba(239,68,68,0.08)",
+          "severity_border": "rgba(239,68,68,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 29,
+            "Event 2": 41.4
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 10,
+          "extra_barricades_needed": 5,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Kengeri Police Station",
+              "distance_km": 6.6,
+              "officers_deployed": 10,
+              "barricades_deployed": 5,
+              "remaining_officers": 10,
+              "remaining_barricades": 40
+            }
+          ]
+        },
+        {
+          "corridor": "Tumkur Road",
+          "collision_score": 66.2,
+          "severity": "HIGH",
+          "action": "STAGE & READY",
+          "action_color": "#f97316",
+          "severity_bg": "rgba(249,115,22,0.08)",
+          "severity_border": "rgba(249,115,22,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 29,
+            "Event 2": 24.8
+          },
+          "time_to_collision_min": 30,
+          "extra_officers_needed": 8,
+          "extra_barricades_needed": 4,
+          "depth_from_epicentres": 2,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Peenya Police Station",
+              "distance_km": 2.2,
+              "officers_deployed": 8,
+              "barricades_deployed": 4,
+              "remaining_officers": 27,
+              "remaining_barricades": 71
+            }
+          ]
+        },
+        {
+          "corridor": "Bellary Road 2",
+          "collision_score": 50.9,
+          "severity": "HIGH",
+          "action": "STAGE & READY",
+          "action_color": "#f97316",
+          "severity_bg": "rgba(249,115,22,0.08)",
+          "severity_border": "rgba(249,115,22,0.35)",
+          "events_colliding": [
+            "Event 1",
+            "Event 2"
+          ],
+          "individual_scores": {
+            "Event 1": 17.4,
+            "Event 2": 24.8
+          },
+          "time_to_collision_min": 45,
+          "extra_officers_needed": 6,
+          "extra_barricades_needed": 3,
+          "depth_from_epicentres": 3,
+          "time_window": "19:00 - 20:00",
+          "colliding_hours_list": [
+            "19:00"
+          ],
+          "dispatch_recommendations": [
+            {
+              "precinct_name": "Yelahanka Police Station",
+              "distance_km": 2.2,
+              "officers_deployed": 6,
+              "barricades_deployed": 3,
+              "remaining_officers": 29,
+              "remaining_barricades": 57
+            }
+          ]
+        }
+      ],
+      "solo_impact_zones": [],
+      "event_summaries": [
+        {
+          "name": "Event 1",
+          "corridor": "Hosur Road",
+          "event_cause": "public_event",
+          "impact_score": 70,
+          "start_hour": 19,
+          "duration": 3,
+          "corridors_affected": 9
+        },
+        {
+          "name": "Event 2",
+          "corridor": "Old Madras Road",
+          "event_cause": "procession",
+          "impact_score": 60,
+          "start_hour": 18,
+          "duration": 2,
+          "corridors_affected": 9
+        }
+      ],
+      "precinct_inventory_status": [
+        {
+          "name": "Madiwala Police Station",
+          "initial_officers": 45,
+          "available_officers": 33,
+          "initial_barricades": 80,
+          "available_barricades": 74,
+          "lat": 12.9226,
+          "lon": 77.6219
+        },
+        {
+          "name": "HSR Layout Police Station",
+          "initial_officers": 35,
+          "available_officers": 35,
+          "initial_barricades": 60,
+          "available_barricades": 60,
+          "lat": 12.9116,
+          "lon": 77.6388
+        },
+        {
+          "name": "Hebbala Police Station",
+          "initial_officers": 40,
+          "available_officers": 40,
+          "initial_barricades": 70,
+          "available_barricades": 70,
+          "lat": 13.0359,
+          "lon": 77.597
+        },
+        {
+          "name": "Peenya Police Station",
+          "initial_officers": 45,
+          "available_officers": 27,
+          "initial_barricades": 80,
+          "available_barricades": 71,
+          "lat": 13.0329,
+          "lon": 77.5273
+        },
+        {
+          "name": "Whitefield Police Station",
+          "initial_officers": 50,
+          "available_officers": 50,
+          "initial_barricades": 90,
+          "available_barricades": 90,
+          "lat": 12.9698,
+          "lon": 77.75
+        },
+        {
+          "name": "HAL Old Airport Police Station",
+          "initial_officers": 35,
+          "available_officers": 35,
+          "initial_barricades": 65,
+          "available_barricades": 65,
+          "lat": 12.9598,
+          "lon": 77.6881
+        },
+        {
+          "name": "Kengeri Police Station",
+          "initial_officers": 30,
+          "available_officers": 10,
+          "initial_barricades": 50,
+          "available_barricades": 40,
+          "lat": 12.9176,
+          "lon": 77.4838
+        },
+        {
+          "name": "Cubbon Park Police Station",
+          "initial_officers": 55,
+          "available_officers": 55,
+          "initial_barricades": 100,
+          "available_barricades": 100,
+          "lat": 12.9738,
+          "lon": 77.596
+        },
+        {
+          "name": "Sadashivanagar Police Station",
+          "initial_officers": 30,
+          "available_officers": 30,
+          "initial_barricades": 50,
+          "available_barricades": 50,
+          "lat": 13.0068,
+          "lon": 77.58
+        },
+        {
+          "name": "Yelahanka Police Station",
+          "initial_officers": 35,
+          "available_officers": 19,
+          "initial_barricades": 60,
+          "available_barricades": 52,
+          "lat": 13.1008,
+          "lon": 77.5963
+        },
+        {
+          "name": "Banaswadi Police Station",
+          "initial_officers": 30,
+          "available_officers": 6,
+          "initial_barricades": 55,
+          "available_barricades": 43,
+          "lat": 13.0104,
+          "lon": 77.6482
+        },
+        {
+          "name": "Halasur Police Station",
+          "initial_officers": 40,
+          "available_officers": 40,
+          "initial_barricades": 70,
+          "available_barricades": 70,
+          "lat": 12.9782,
+          "lon": 77.6242
+        },
+        {
+          "name": "Mahadevapura Police Station",
+          "initial_officers": 45,
+          "available_officers": 45,
+          "initial_barricades": 80,
+          "available_barricades": 80,
+          "lat": 12.9936,
+          "lon": 77.6932
+        },
+        {
+          "name": "Yeshwanthpura Police Station",
+          "initial_officers": 40,
+          "available_officers": 40,
+          "initial_barricades": 70,
+          "available_barricades": 70,
+          "lat": 13.0235,
+          "lon": 77.5589
+        }
+      ],
+      "summary": {
+        "total_events_analysed": 2,
+        "collision_zone_count": 9,
+        "total_extra_officers": 90,
+        "total_extra_barricades": 45,
+        "most_critical_zone": "ORR East 1",
+        "has_critical_collision": true,
+        "alert_level": "\ud83d\udd34 CRITICAL COLLISION DETECTED"
+      }
+    },
+    "summary": {
+      "total_events_analysed": 2,
+      "collision_zone_count": 9,
+      "total_extra_officers": 90,
+      "total_extra_barricades": 45,
+      "most_critical_zone": "ORR East 1",
+      "has_critical_collision": true,
+      "alert_level": "\ud83d\udd34 CRITICAL COLLISION DETECTED"
+    }
+  }
+]

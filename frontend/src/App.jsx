@@ -6,6 +6,7 @@ import LearningEngine from './components/LearningEngine';
 import CommandCenter from './components/CommandCenter';
 import Settings from './components/Settings';
 import Analytics from './components/Analytics';
+import CollisionDetector from './components/CollisionDetector';
 import { translations } from './translations';
 import heroImage from './assets/hero.png';
 import heatmapHeroImage from './assets/heatmap_hero.png';
@@ -59,6 +60,15 @@ const getTabIcon = (tab) => {
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
       );
+    case 'collision':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ea750e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="7" cy="12" r="4" />
+          <circle cx="17" cy="12" r="4" />
+          <line x1="11" y1="9" x2="13" y2="15" />
+          <line x1="13" y1="9" x2="11" y2="15" />
+        </svg>
+      );
     case 'settings':
       return (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ea750e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -107,6 +117,8 @@ export default function App() {
         return <LearningEngine predictionContext={predictionContext} language={language} />;
       case 'command':
         return <CommandCenter language={language} />;
+      case 'collision':
+        return <CollisionDetector language={language} />;
       case 'settings':
         return (
           <Settings 
@@ -135,6 +147,8 @@ export default function App() {
         return { title: t.learning, desc: t.learning_desc };
       case 'command':
         return { title: t.command, desc: t.command_desc };
+      case 'collision':
+        return { title: 'Collision Detector', desc: 'Detect where simultaneous events collide and compute compound traffic impact scores' };
       case 'settings':
         return { title: t.settings, desc: t.settings_desc };
       case 'exports':
@@ -230,6 +244,21 @@ export default function App() {
                 <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
               </svg>
               <span>{translations[language].command}</span>
+            </button>
+          </li>
+
+          <li className="nav-item">
+            <button 
+              className={`nav-button ${activeTab === 'collision' ? 'active' : ''}`}
+              onClick={() => setActiveTab('collision')}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="7" cy="12" r="4" />
+                <circle cx="17" cy="12" r="4" />
+                <line x1="11" y1="9" x2="13" y2="15" />
+                <line x1="13" y1="9" x2="11" y2="15" />
+              </svg>
+              <span>Collision Detector</span>
             </button>
           </li>
 
