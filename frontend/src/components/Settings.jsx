@@ -22,7 +22,15 @@ export default function Settings({
         alert(t.set_alert_valid);
         return;
       }
-      setPersonnel(prev => [...prev, { name, phone }]);
+
+      let finalPhone = phone;
+      if (cleanPhone.length === 10) {
+        finalPhone = `+91${cleanPhone}`;
+      } else if (cleanPhone.length > 10 && !phone.startsWith('+')) {
+        finalPhone = `+${cleanPhone}`;
+      }
+
+      setPersonnel(prev => [...prev, { name, phone: finalPhone }]);
       nameInput.value = '';
       phoneInput.value = '';
     }
@@ -193,7 +201,7 @@ export default function Settings({
             />
             <input
               type="text"
-              placeholder="+91..."
+              placeholder={language === 'kn' ? '10-ಅಂಕಿಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ' : '10-digit number'}
               id="settings-personnel-phone"
               style={{ width: '180px', padding: '10px 14px', fontSize: '0.88rem', borderRadius: '8px', border: '1.5px solid var(--border-color)', fontWeight: 600, background: 'var(--bg-primary)', color: 'var(--text-dark)' }}
             />
