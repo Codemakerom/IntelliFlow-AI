@@ -17,6 +17,14 @@ app = FastAPI(title="Gridlock Round 3 Full-Stack API")
 def read_root():
     return {"message": "Gridlock Backend API is Live!", "status": "running"}
 
+@app.get("/health")
+def health_check():
+    return {
+        "status": "ok",
+        "service": "Gridlock Backend",
+        "timestamp": datetime.now().isoformat()
+    }
+
 # Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
