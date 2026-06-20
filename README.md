@@ -1,7 +1,12 @@
 # 🚦 GridLock: Event-Driven Congestion Forecasting & Tactical Recommendation Engine
 
-GridLock is a state-of-the-art, event-driven congestion forecasting and tactical recommendation engine designed for city-wide traffic enforcement in Bangalore. It bridges machine learning predictions, geographical topological graphs, LLM-powered command sandboxes, and automated dispatch APIs into a unified, bilingual command interface. 
+GridLock is a state-of-the-art, event-driven congestion forecasting and tactical recommendation engine designed for city-wide traffic enforcement in Bangalore. It bridges machine learning predictions, geographical topological graphs, LLM-powered command sandboxes, and automated dispatch APIs into a unified, bilingual command interface.
 
+## 🎥 Demo Video
+🔗 https://youtu.be/SCr3uf1592Q
+
+## 🌐 Live Deployment
+🔗 https://flipkart-grid-lock-frontend.vercel.app/
 ---
 
 ## 🌟 Problem Statement
