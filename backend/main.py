@@ -17,7 +17,7 @@ app = FastAPI(title="Gridlock Round 3 Full-Stack API")
 def read_root():
     return {"message": "Gridlock Backend API is Live!", "status": "running"}
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     return {
         "status": "ok",
