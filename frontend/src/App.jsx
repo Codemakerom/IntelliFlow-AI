@@ -85,6 +85,15 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [predictionContext, setPredictionContext] = useState(null);
   const [language, setLanguage] = useState('en');
+  const [showWakeupNotice, setShowWakeupNotice] = useState(() => {
+    // Show only once per browser session
+    return !sessionStorage.getItem('gridlock_wakeup_dismissed');
+  });
+
+  const dismissWakeupNotice = () => {
+    sessionStorage.setItem('gridlock_wakeup_dismissed', '1');
+    setShowWakeupNotice(false);
+  };
 
   // Field Commanders / Personnel state
   const [personnel, setPersonnel] = useState(() => {
@@ -162,6 +171,35 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* Render Free-Tier Wakeup Notice */}
+      {showWakeupNotice && (
+        <div className="wakeup-overlay" onClick={dismissWakeupNotice}>
+          <div className="wakeup-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="wakeup-icon-ring">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                <line x1="6" y1="1" x2="6" y2="4" />
+                <line x1="10" y1="1" x2="10" y2="4" />
+                <line x1="14" y1="1" x2="14" y2="4" />
+              </svg>
+            </div>
+            <div className="wakeup-body">
+              <h3 className="wakeup-title">⚡ Server Waking Up…</h3>
+              <p className="wakeup-message">
+                This app is deployed on <strong>Render's free tier</strong>. The backend server may take{' '}
+                <strong>2 – 3 minutes</strong> to wake up after a period of inactivity.
+              </p>
+              <p className="wakeup-sub">
+                You can still explore the UI in the meantime — data will load once the server is ready.
+              </p>
+            </div>
+            <button className="wakeup-dismiss-btn" onClick={dismissWakeupNotice}>
+              Got it, thanks!
+            </button>
+          </div>
+        </div>
+      )}
       {/* Sidebar Navigation */}
       <aside className="sidebar">
         <div className="logo-section">
